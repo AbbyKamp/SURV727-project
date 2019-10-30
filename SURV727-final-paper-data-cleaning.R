@@ -17,10 +17,10 @@ wash_data %>%
 # Abby's Twitter API tokes
 create_token(
   app = "SURV727",
-  consumer_key = "5cRDeDWFYi05VntBoIqIPcE6s",
-  consumer_secret = "bn16jHvC9CaTyruxO1HsJvhdosO25vUyUn3RSZFrmzTHGpDywf",
-  access_token = "1181191211186606080-jPCRfVki97q38Eqw8tQclnq08Bjuad",
-  access_secret = "MAucp4yoOPX1PX9DFGPlTB0rBjQt5afaQhjJdc6rSEmWR")
+  consumer_key = "",
+  consumer_secret = "",
+  access_token = "",
+  access_secret = "")
 
 #get the token
 get_token()
