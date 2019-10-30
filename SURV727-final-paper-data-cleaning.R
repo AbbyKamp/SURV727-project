@@ -2,6 +2,7 @@
 
 #packages to install
 library(dplyr)
+library(rtweet)
 
 #uploading washington-state data
 wash_data <- read_csv("~/Data-cleaning/final-paper/data/washington-2018-results.csv")
@@ -13,13 +14,33 @@ wash_data %>%
   select(County, Race, Candidate, Votes, PercentageOfTotalVotes) %>%
   filter(Race == "State Measures Initiative Measure No. 1639 Initiative Measure No. 1639 concerns firearms.")
   
-# Twitter API
+# Abby's Twitter API tokes
 create_token(
-  app = "Project727",
-  consumer_key = "9QNMbZyUIoD0PhIX8ucEqqILp",
-  consumer_secret = "qBoORiu2VgDJAXHqceq24XJzmLyfq5ktwXXAI06n98uhQ3HJCk",
-  access_token = "1188871434740862976-JhfoMtGIvOs0S7WcnLov0A5VgzlUle",
-  access_secret = "VriQtJZRAeWi2x8m6WrZoEAxpCWn5ROoNqInujL4M379d"
-)
+  app = "SURV727",
+  consumer_key = "5cRDeDWFYi05VntBoIqIPcE6s",
+  consumer_secret = "bn16jHvC9CaTyruxO1HsJvhdosO25vUyUn3RSZFrmzTHGpDywf",
+  access_token = "1181191211186606080-jPCRfVki97q38Eqw8tQclnq08Bjuad",
+  access_secret = "MAucp4yoOPX1PX9DFGPlTB0rBjQt5afaQhjJdc6rSEmWR")
 
+#get the token
+get_token()
 
+#grabbing Yesto1631 trends
+yes_1631 <- search_fullarchive ("#Yesto1631",n = 100, env_name = "SURV727",
+                               fromDate ="201810010000",toDate = "201811082359")
+
+#getting yeson1631
+yeson1631 <- search_fullarchive ("YesOn1631",n = 100, env_name = "SURV727",
+                                fromDate ="201810010000",toDate = "201811082359")
+
+#getting yeson1631, take 2 without a hashtag
+yes_nohashtag <- search_fullarchive ("YesOn1631",n = 100, env_name = "SURV727",
+                                 fromDate ="201810010000",toDate = "201811082359")
+
+#trying neutral 1631 search
+neutral <- search_fullarchive ("Initiative1631", n = 100, env_name = "SURV727",
+                                fromDate ="201810010000",toDate = "201811082359")
+
+#this wasn't working
+#testing get_trends
+trends <- get_trends(bbox = c(-116.55, 45.33, -124.46, 49))
