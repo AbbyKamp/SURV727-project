@@ -1,0 +1,49 @@
+---
+title: "Project Fundamentals"
+author: "Rameesha"
+date: "10/29/2019"
+output: html_document
+---
+
+```{r}
+library(rtweet)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+# Twitter API
+create_token(
+  app = "Project727",
+  consumer_key = "9QNMbZyUIoD0PhIX8ucEqqILp",
+  consumer_secret = "qBoORiu2VgDJAXHqceq24XJzmLyfq5ktwXXAI06n98uhQ3HJCk",
+  access_token = "1188871434740862976-JhfoMtGIvOs0S7WcnLov0A5VgzlUle",
+  access_secret = "VriQtJZRAeWi2x8m6WrZoEAxpCWn5ROoNqInujL4M379d"
+)
+
+```
+
+Get token
+
+```{r}
+get_token()
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r}
+no_1631 <- search_fullarchive ("#NoOn1631",n = 100, env_name = "Dev2",fromDate ="201810010000",toDate = "201811080000")
+no_1631
+```
+
+
+
+
+
+
+
