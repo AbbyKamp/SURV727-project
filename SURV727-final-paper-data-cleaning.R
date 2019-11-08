@@ -83,3 +83,43 @@ neutral_week4 <- search_fullarchive("#initiative1631 OR (initiative 1631)", n = 
 #merging the neutral weeks
 netural_4_weeks <- do.call("rbind", list(neutral_week1, neutral_week2, neutral_week3, neutral_week4))
 
+#Pulling NO Tweets"
+no_week1_A <- search_fullarchive("#NoOn1631 OR #Noto1631", n = 100, env_name = "SURV727",
+                               fromDate ="201810090000",toDate = "201810152359")
+
+no_week2 <- search_fullarchive("NoOn1631 OR Noto1631", n = 100, env_name = "Dev2",
+                               fromDate ="201810160000",toDate = "201810222359")
+
+no_week3 <- search_fullarchive("NoOn1631 OR Noto1631", n = 250, env_name = "Dev2",
+                               fromDate ="201810230000",toDate = "201810292359")
+
+no_week4 <- search_fullarchive("NoOn1631 OR Noto1631", n = 250, env_name = "Dev2",
+                               fromDate ="201810300000",toDate = "201811062359")
+
+#abby uploading no_tweets final object
+load("~/Data-cleaning/final-paper/no_merge_complete.RData")
+
+NROW(no_merge_complete)
+
+#deleting duplicate tweets by status_id
+unique_nos <-
+  no_merge_complete %>%
+  distinct(status_id, .keep_all = TRUE)
+
+#testing for duplicates
+#this shows that neutral yes only has about 200 duplicates
+unique <-
+  neutral_yes_tweets %>%
+  distinct(status_id, .keep_all = TRUE)
+
+NROW(unique)
+
+NROW(unique_nos)
+
+#merging neutral, positive, and nos
+all_tweets <- do.call("rbind", list(yes_4_weeks, netural_4_weeks,unique_nos))
+
+NROW(all_tweets)
+
+
+

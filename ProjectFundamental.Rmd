@@ -58,7 +58,7 @@ save_as_csv(no_1631,"no_2.csv",prepend_ids = TRUE, na = "",fileEncoding = "UTF-8
 Pulling No tweets timeline: weekly
 
 ```{r}
-##PULLING YES TWEETS##
+##PULLING NO TWEETS##
 no_week1 <- search_fullarchive("#NoOn1631 OR #Noto1631", n = 100, env_name = "Dev2",
                                 fromDate ="201810090000",toDate = "201810152359")
 
@@ -81,13 +81,12 @@ no_merge_complete <- do.call("rbind", list(no_4_weeks,no_1631_2, no_1631))
 ```
 
 ```{r}
-library(dbplyr)
+
 ```
 
 
 ```{r}
-unique <-
-  no_merge_complete
+
 
 ```
 
