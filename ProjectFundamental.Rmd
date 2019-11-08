@@ -1,0 +1,107 @@
+---
+title: "Project Fundamentals"
+author: "Rameesha"
+date: "10/29/2019"
+output: html_document
+---
+
+```{r}
+library(rtweet)
+load("/Users/user/Desktop/Twitter/Twitter R data.RData")
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+# Twitter API
+create_token(
+  app = "Project727",
+  consumer_key = "",
+  consumer_secret = "",
+  access_token = "",
+  access_secret = ""
+)
+
+```
+
+Get token
+
+```{r}
+get_token()
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r}
+no_1631 <- search_fullarchive ("#NoOn1631",n = 100, env_name = "Dev2",fromDate ="201810010000",toDate = "201811080000")
+no_1631
+```
+
+```{r}
+save_as_csv(no_1631,"no_1.csv",prepend_ids = TRUE, na = "",fileEncoding = "UTF-8") 
+```
+
+```{r}
+no_1631_2 <- search_fullarchive ("#NoOn1631", n = 500, env_name = "Dev2", fromDate ="201810010000",toDate = "201811080000")
+no_1631_2
+```
+
+```{r}
+save_as_csv(no_1631,"no_2.csv",prepend_ids = TRUE, na = "",fileEncoding = "UTF-8") 
+```
+
+Pulling No tweets timeline: weekly
+
+```{r}
+##PULLING YES TWEETS##
+no_week1 <- search_fullarchive("#NoOn1631 OR #Noto1631", n = 100, env_name = "Dev2",
+                                fromDate ="201810090000",toDate = "201810152359")
+
+no_week2 <- search_fullarchive("NoOn1631 OR Noto1631", n = 100, env_name = "Dev2",
+                                fromDate ="201810160000",toDate = "201810222359")
+
+no_week3 <- search_fullarchive("NoOn1631 OR Noto1631", n = 250, env_name = "Dev2",
+                                fromDate ="201810230000",toDate = "201810292359")
+
+no_week4 <- search_fullarchive("NoOn1631 OR Noto1631", n = 250, env_name = "Dev2",
+                                fromDate ="201810300000",toDate = "201811062359")
+
+#merging the four yes objects and saving to one file
+no_4_weeks <- do.call("rbind", list(no_week1, no_week2, no_week3, no_week4))
+```
+Merging with last 
+
+```{r}
+no_merge_complete <- do.call("rbind", list(no_4_weeks,no_1631_2, no_1631))
+```
+
+```{r}
+library(dbplyr)
+```
+
+
+```{r}
+unique <-
+  no_merge_complete
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
