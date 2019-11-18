@@ -77,4 +77,14 @@ full_location <-
 full_location %>%
   select(user_id, screen_name, city, county)
 
+#merge user location with actual tweets
+tweets_location <-
+  full_location %>% semi_join(tweets, by = "user_id")
+
+str(full_location$user_id)
+str(tweets$user_id)
+
+#annoyingly full_location has an extra x in the user id so need to remove
+full_location$user_id <- gsub("x", "", full_location$user_id)
+tweets$user_id <- gsub("x", "", tweets$user_id)
   
