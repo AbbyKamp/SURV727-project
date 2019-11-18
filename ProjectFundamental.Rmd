@@ -7,7 +7,15 @@ output: html_document
 
 ```{r}
 library(rtweet)
+library(tidyverse)
+library(dplyr)
+library(tidyverse)
+library(gtrendsR)
+library(censusapi)
+library(reshape2)
 load("/Users/user/Desktop/Twitter/Twitter R data.RData")
+load("/Users/user/Desktop/Twitter/Location data.RData")
+
 ```
 
 ## R Markdown
@@ -80,7 +88,15 @@ Merging with last
 no_merge_complete <- do.call("rbind", list(no_4_weeks,no_1631_2, no_1631))
 ```
 
+# Data Cleaning > using strsplit code to split elements of a character vector into substrings according to the matches 
 ```{r}
+#identifying bad strings
+bad_strings <-  twitter_users_excel$location
+twitter_users_excel$ss <- strsplit(bad_strings, ", ", fixed= TRUE)
+colsplit(twitter_users_excel$ss, ", ", c("A", "B"))
+
+loc <- data.frame(colsplit(twitter_users_excel$ss, ", ", c("A", "B")))
+
 
 ```
 
