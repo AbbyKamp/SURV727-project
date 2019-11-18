@@ -15,8 +15,6 @@ setwd("~/Data-cleaning/final-paper/data")
 tweets <- read_csv("tweets.csv")
 
 #exploratory analysis
-
-
 #checking place names
 places <-
 tweets %>%
@@ -77,9 +75,6 @@ full_location <-
 full_location %>%
   select(user_id, screen_name, city, county)
 
-#merge user location with actual tweets
-tweets_location <-
-  full_location %>% semi_join(tweets, by = "user_id")
 
 str(full_location$user_id)
 str(tweets$user_id)
@@ -87,4 +82,17 @@ str(tweets$user_id)
 #annoyingly full_location has an extra x in the user id so need to remove
 full_location$user_id <- gsub("x", "", full_location$user_id)
 tweets$user_id <- gsub("x", "", tweets$user_id)
-  
+
+#merge user location with actual tweets
+tweets_location <-
+  full_location %>% semi_join(tweets, by = "user_id")
+
+#loading and cleaning votes info
+votes <- read_csv("1631-county-votes.csv")
+votes <-
+  votes %>%
+  select(County, Race, Candidate, Votes, PercentageOfTotalVotes) %>%
+  filter(Race == "State Measures Initiative Measure No. 1639 Initiative Measure No. 1639 concerns firearms.")
+
+
+sum(votes$Votes)
