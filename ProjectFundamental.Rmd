@@ -96,14 +96,12 @@ twitter_users_excel$ss <- strsplit(bad_strings, ", ", fixed= TRUE)
 colsplit(twitter_users_excel$ss, ", ", c("A", "B"))
 
 loc <- data.frame(colsplit(twitter_users_excel$ss, ", ", c("A", "B")))
-
-
 ```
 
 
 ```{r}
-
-
+loc$A  <- as.character(gsub("c(", "",loc$A))
+#loc$B  <- as.character(gsub("")", "",loc$B))
 ```
 
 

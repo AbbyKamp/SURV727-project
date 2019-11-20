@@ -1,0 +1,134 @@
+---
+title: "Combined-cleaned-data"
+author: "Abigail Kamp and Rameesha Mehboob"
+date: "November 19, 2019"
+output: html_document
+---
+
+First, we load in all of our packages.
+
+```{r}
+library(rtweet)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(rjson)
+library(ggmap)
+
+citation("ggmap")
+
+```
+
+Then we load in all of our data files. These files were downloaded from TWitter and the Washington Secretary of State webpage and saved as CSVs. 
+```{r}
+
+setwd("~/Desktop/Twitter")
+
+#uploading tweet data
+tweets <- read_csv("tweets.csv")
+
+#uploading user data pulled from the tweet data
+ users <- read_csv("twitter-users.csv")
+
+#importing voting reuslts
+votes <- read_csv("washington-2018-results.csv")
+head(votes)
+
+#uploading list of cities in washington to match with user information
+cities <- read_csv("washington-cities.csv")
+```
+
+## Twitter users vs. voters map
+
+We need to clean the twitter users data and the city file to create a county location for all twitter users. 
+
+```{r}
+#we drop the NAs
+users2 <-
+  users %>%
+   select(user_id, location, screen_name) %>%
+   drop_na(.)
+
+#seperate the location column into city and state
+users2 <- separate(users2, location, into = c("city","state"), sep= (","))
+
+#get rid of all the white space
+users2 <-
+users2 %>%
+  select(user_id, screen_name, city) %>%
+  mutate(city = tolower(trimws(.$city)))
+
+#then we need to clean the cities data
+colnames(cities)[1] <- "city"
+colnames(cities)[2] <- "county"
+
+cities <-
+cities %>%
+  mutate(city = tolower(trimws(.$city, "l")))
+
+cities$city <- (gsub("\\s", "", cities$city))
+
+#then we merge the dataframes
+full_location <- merge(users2, cities, by = "city")
+
+#reordering city variables
+full_location <-
+full_location %>%
+  select(user_id, screen_name, city, county)
+
+```
+
+Then we combine the twitter user data with the tweets file, so that we have the location for all tweets were location was provided. (Twitter does not require users to disclose their location.)
+
+```{r}
+#annoyingly full_location has an extra x in the user id so need to remove
+full_location$user_id <- gsub("x", "", full_location$user_id)
+tweets$user_id <- gsub("x", "", tweets$user_id)
+
+#merge user location with actual tweets
+tweets_location <-
+  tweets %>%
+  select(user_id, screen_name, text, is_retweet, favorite_count,
+         reply_count, retweet_count, hashtags, followers_count) 
+
+#something weird is happening when I merge and I don't know why
+online_users <- merge(tweets_location, full_location, by = "user_id")
+ 
+```
+
+We need to do some basic cleaning of the votes data so that we only have information on the 1631 referendum.
+
+```{r}
+votes <-
+  votes %>%
+  select(County, Race, Candidate, Votes, PercentageOfTotalVotes) %>%
+  filter(Race == "State Measures Initiative Measure No. 1639 Initiative Measure No. 1639 concerns firearms.")
+
+```
+
+
+```{r}
+#Mapping the voting data
+#i use the ggmap package for this map
+state = c(left = -124.84, bottom = 45.54,right = -116.92, top = 49.0)
+
+map <- get_stamenmap(state, zoom = 7, maptype = "toner-lite") %>% ggmap()
+map
+
+#trying to plot the voter data
+votes %>%
+  filter(Candidate == "Yes") %>%
+  qmplot(state)
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
