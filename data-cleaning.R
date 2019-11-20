@@ -96,3 +96,17 @@ votes <-
 
 
 sum(votes$Votes)
+
+#how to group by hashtag
+popular_tweets <-
+  tweets %>%
+  select(hashtags, reply_count, favorite_count, text) %>%
+  drop_na(hashtags) %>%
+  mutate(hashtags = tolower(hashtags)) %>%
+  separate(., hashtags, into = c("hashtag1", "hashtag2", "hashtag3"),
+           sep = " ")%>%
+  group_by(hashtag1) %>%
+  count(hashtag1, hashtag2, hashtag3) %>%
+  arrange(desc(n))
+
+popular_tweets
