@@ -13,6 +13,9 @@ library(dplyr)
 library(tidyr)
 library(readr)
 library(rjson)
+library(ggmap)
+
+citation("ggmap")
 ```
 
 Then we load in all of our data files. These files were downloaded from TWitter and the Washington Secretary of State webpage and saved as CSVs. 
@@ -103,8 +106,19 @@ votes <-
 
 ```
 
+Now I attempt to map the voting data. First I start by showing a map of Washington state
 
 ```{r}
+#i use the ggmap package for this map
+state = c(left = -124.84, bottom = 45.54,right = -116.92, top = 49.0)
+
+map <- get_stamenmap(state, zoom = 7, maptype = "toner-lite") %>% ggmap()
+map
+
+#trying to plot the voter data
+votes %>%
+  filter(Candidate == "Yes") %>%
+  qmplot(state)
 
 ```
 
