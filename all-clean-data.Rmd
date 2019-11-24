@@ -14,16 +14,25 @@ library(tidyr)
 library(readr)
 library(rjson)
 library(ggmap)
+<<<<<<< HEAD
 library(tidyverse)
 library(ggvis)
 library(shiny)
+=======
+
+>>>>>>> a3617bf1d2a478fddcc5567148521e57438f9916
 citation("ggmap")
 ```
 
 Then we load in all of our data files. These files were downloaded from TWitter and the Washington Secretary of State webpage and saved as CSVs. 
 ```{r}
 
+<<<<<<< HEAD
 setwd("~/Desktop/Twitter")
+=======
+#setting working directory
+setwd("~/Data-cleaning/final-paper/data")
+>>>>>>> a3617bf1d2a478fddcc5567148521e57438f9916
 
 #uploading tweet data
 tweets <- read_csv("tweets.csv")
@@ -32,7 +41,11 @@ tweets <- read_csv("tweets.csv")
  users <- read_csv("twitter-users.csv")
 
 #importing voting reuslts
+<<<<<<< HEAD
 votes <- read_csv("washington-2018-results.csv")
+=======
+votes <- read_csv("~/Data-cleaning/final-paper/data/washington-2018-results.csv")
+>>>>>>> a3617bf1d2a478fddcc5567148521e57438f9916
 head(votes)
 
 #uploading list of cities in washington to match with user information
@@ -90,6 +103,7 @@ tweets$user_id <- gsub("x", "", tweets$user_id)
 tweets_location <-
   tweets %>%
   select(user_id, screen_name, text, is_retweet, favorite_count,
+<<<<<<< HEAD
          reply_count, retweet_count, hashtags, followers_count, created_at) 
 
 #Method 1
@@ -98,6 +112,12 @@ data_final  <- tweets_location%>%
 
 #Method 2
 total <- merge(tweets_location,full_location,by=c("user_id","screen_name"))  
+=======
+         reply_count, retweet_count, hashtags, followers_count) 
+
+#something weird is happening when I merge and I don't know why
+online_users <- merge(tweets_location, full_location, by = "user_id")
+>>>>>>> a3617bf1d2a478fddcc5567148521e57438f9916
  
 ```
 
@@ -111,9 +131,15 @@ votes <-
 
 ```
 
+<<<<<<< HEAD
 
 ```{r}
 #Mapping the voting data
+=======
+Now I attempt to map the voting data. First I start by showing a map of Washington state
+
+```{r}
+>>>>>>> a3617bf1d2a478fddcc5567148521e57438f9916
 #i use the ggmap package for this map
 state = c(left = -124.84, bottom = 45.54,right = -116.92, top = 49.0)
 
@@ -124,6 +150,7 @@ map
 votes %>%
   filter(Candidate == "Yes") %>%
   qmplot(state)
+<<<<<<< HEAD
 ```
 
 ```{r}
@@ -145,4 +172,19 @@ shinyApp(ui = ui, server = server)
 ```
 
 ```{r}
+=======
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+>>>>>>> a3617bf1d2a478fddcc5567148521e57438f9916
 ```
