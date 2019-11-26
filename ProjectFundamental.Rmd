@@ -13,8 +13,10 @@ library(tidyverse)
 library(gtrendsR)
 library(censusapi)
 library(reshape2)
-load("/Users/user/Desktop/Twitter/Twitter R data.RData")
 load("/Users/user/Desktop/Twitter/Location data.RData")
+load("/Users/user/Documents/GitHub/SURV727-project/Twitter R data.RData")
+tweets <- read_csv("tweets.csv")
+load("/Users/user/Desktop/Twitter/popular_tweets.RData")
 
 ```
 
@@ -97,14 +99,23 @@ colsplit(twitter_users_excel$ss, ", ", c("A", "B"))
 
 loc <- data.frame(colsplit(twitter_users_excel$ss, ", ", c("A", "B")))
 
-
 ```
 
 
 ```{r}
-
-
+# Data visulaization - support
+data_visual_twitter <-
+  tweets %>%
+  select(hashtags, reply_count, favorite_count) %>%
+  drop_na(hashtags) %>%
+  mutate(hashtags = tolower(hashtags)) %>%
+  separate(., hashtags, into = c("hashtag1", "hashtag2", "hashtag3"),
+           sep = " ") %>%
+  count(hashtag1, hashtag2, hashtag3) %>%
+  arrange(desc(n))
+ # summarize_if(is.numeric, sum, na.rm=TRUE)
 ```
+
 
 
 ```{r}
