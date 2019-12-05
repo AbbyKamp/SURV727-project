@@ -41,6 +41,7 @@ head(votes)
 cities <- read_csv("washington-cities.csv")
 ```
 
+
 ## Twitter users vs. voters map
 
 We need to clean the twitter users data and the city file to create a county location for all twitter users. 
@@ -147,11 +148,7 @@ county %>%
 map2+
   geom_path(aes(x= long, y= lat, group = group), data = wash_counties)
 
-w <- ggplot(data = wash_counties, mapping =aes(x= long, y= lat, group = group)) +
-  geom_polygon(fill = "white", color = "black") +
-  geom_polygon(data = yes_votes, aes(x= long, y= lat, fill = PercentageOfTotalVotes))
-
-w
+w <- ggplot(data = wash_counties, mapping =aes(x= long, y= lat, group = group))
 ```
 
 Now that we have our state map, we need to combine it with the voting data to visualize how people vote. 
@@ -164,6 +161,7 @@ head(vote_loc)
 
 ```
 
+Then I filter the data so that we can visualize the percentage of voters who voted Yes on 1631.
 ```{r}
 
 yes_votes <-
@@ -180,7 +178,7 @@ results <-  w +
 results
 ```
 
-
+We can also see where the many "No" Voters are
 
 ```{r}
 
@@ -191,25 +189,17 @@ no_votes <-
   mutate(Votes = as.numeric(.$Votes))
 
 no_results <-  w +
-  geom_polygon(data = no_votes, aes(x= long, y= lat, fill = PercentageOfTotalVotes))
+  geom_polygon(data = no_votes, aes(x= long, y= lat, fill = PercentageOfTotalVotes)) +     ggtitle("% Voters who Voted No on 1631")
 
-```
-
-```{r}
 no_results
+
 ```
 
 ```{r}
 
-sum_votes <- 
-votes %>%
-  group_by(Candidate) %>%
-  mutate(Total_votes = sum(Votes)) 
-
-ggplot(data = sum_votes, aes(x= Candidate, y = Total_votes)) +
-  geom_bar(stat = "identity") 
 ```
 
+<<<<<<< HEAD
 ```{r}
 #County data set
 #option 1  
@@ -227,6 +217,16 @@ geom_bar(stat = "identity", aes(fill = Candidate)) + coord_flip()
   #facet_wrap(~ Candidate, scale = "free", ncol = 4) 
  # coord_polar("y", start=0)
 
+=======
+
+```{r}
+
+```
+
+```{r}
+tweets %>%
+  distinct(status_id)
+>>>>>>> e30fac92faf2b35d59185c917851f11ff19a1355
 ```
 
 ```{r}
