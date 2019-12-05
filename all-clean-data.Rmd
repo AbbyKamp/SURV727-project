@@ -14,29 +14,17 @@ library(tidyr)
 library(readr)
 library(rjson)
 library(ggmap)
-<<<<<<< HEAD
 library(maps)
-=======
-<<<<<<< HEAD
-library(tidyverse)
 library(ggvis)
-library(shiny)
-=======
->>>>>>> 860c79174f509e5bc93b7f7d7bfdd48a28c2c80d
 
->>>>>>> a3617bf1d2a478fddcc5567148521e57438f9916
 citation("ggmap")
 ```
 
 Then we load in all of our data files. These files were downloaded from TWitter and the Washington Secretary of State webpage and saved as CSVs. 
 ```{r, cache=TRUE}
 
-<<<<<<< HEAD
-setwd("~/Desktop/Twitter")
-=======
 #setting working directory
 setwd("~/Data-cleaning/final-paper/data")
->>>>>>> a3617bf1d2a478fddcc5567148521e57438f9916
 
 #uploading tweet data
 tweets <- read_csv("tweets.csv")
@@ -45,11 +33,7 @@ tweets <- read_csv("tweets.csv")
  users <- read_csv("twitter-users.csv")
 
 #importing voting reuslts
-<<<<<<< HEAD
-votes <- read_csv("washington-2018-results.csv")
-=======
 votes <- read_csv("~/Data-cleaning/final-paper/data/washington-2018-results.csv")
->>>>>>> a3617bf1d2a478fddcc5567148521e57438f9916
 head(votes)
 
 #uploading list of cities in washington to match with user information
@@ -107,58 +91,46 @@ tweets$user_id <- gsub("x", "", tweets$user_id)
 tweets_location <-
   tweets %>%
   select(user_id, screen_name, text, is_retweet, favorite_count,
-<<<<<<< HEAD
-         reply_count, retweet_count, hashtags, followers_count, created_at) 
-
-#Method 1
-data_final  <- tweets_location%>%
- inner_join(full_location, by = c("user_id" = "user_id"))
-
-#Method 2
-total <- merge(tweets_location,full_location,by=c("user_id","screen_name"))  
-=======
          reply_count, retweet_count, hashtags, followers_count) 
 
 #something weird is happening when I merge and I don't know why
 online_users <- merge(tweets_location, full_location, by = "user_id")
->>>>>>> a3617bf1d2a478fddcc5567148521e57438f9916
  
 ```
 
 We need to do some basic cleaning of the votes data so that we only have information on the 1631 referendum. We will also need to get the latitude and longitude for each county.
 
 ```{r}
+target <- c("State Measures Initiative Measure No. 1631 Initiative Measure No. 1631 concerns pollution.")
+
+target2 <- c("Washington State Initiative Measure No. 1631 Initiative Measure No. 1631 concerns pollution.")
+
 votes <-
   votes %>%
   select(County, Race, Candidate, Votes, PercentageOfTotalVotes) %>%
-  filter(Race == "State Measures Initiative Measure No. 1639 Initiative Measure No. 1639 concerns firearms.")%>%
+  filter(Race %in% c(target, target2)) %>%
   mutate(subregion= tolower(County))
+
+vote_loc <- right_join(wash_counties, votes, by = "subregion")
+
+head(vote_loc)
 
 ```
 
-<<<<<<< HEAD
 # Mapping
 
 Now I attempt to map the voting data. This first attempt uses get_stamenap to get a map of Washignton. It works but I don't think it has the counties. 
-=======
-<<<<<<< HEAD
 
 ```{r}
-#Mapping the voting data
-=======
-Now I attempt to map the voting data. First I start by showing a map of Washington state
->>>>>>> 860c79174f509e5bc93b7f7d7bfdd48a28c2c80d
-
-```{r}
->>>>>>> a3617bf1d2a478fddcc5567148521e57438f9916
 #i use the ggmap package for this map
 state = c(left = -124.84, bottom = 45.54,right = -116.92, top = 49.0)
 
 map2 <- get_stamenmap(state, zoom = 7, maptype = "toner-lite") %>% ggmap()
+map2
 
 #this makes a nice map with cities
-map2+
-  geom_path(aes(x= long, y= lat, group = group), data = vote_loc)
+#map2+
+  #geom_path(aes(x= long, y= lat, group = group))
 
 ```
 
@@ -175,17 +147,17 @@ map2+
   geom_path(aes(x= long, y= lat, group = group), data = wash_counties)
 
 w <- ggplot(data = wash_counties, mapping =aes(x= long, y= lat, group = group)) +
-  geom_polygon(fill = "white", color = "black")
+  geom_polygon(fill = "white", color = "black") +
+  geom_polygon(data = yes_votes, aes(x= long, y= lat, fill = PercentageOfTotalVotes))
 
 w
-
 ```
 
 Now that we have our state map, we need to combine it with the voting data to visualize how people vote. 
 
 
 ```{r}
-vote_loc <- left_join(wash_counties, votes, by = "subregion")
+vote_loc <- right_join(wash_counties, votes, by = "subregion")
 
 head(vote_loc)
 
@@ -196,13 +168,12 @@ head(vote_loc)
 yes_votes <-
   vote_loc %>%
   filter(Candidate == "Yes") %>%
-<<<<<<< HEAD
   mutate(PercentageOfTotalVotes = as.numeric(.$PercentageOfTotalVotes)) %>%
   mutate(Votes = as.numeric(.$Votes))
 
-
 results <-  w +
-  geom_polygon(data = yes_votes, aes(x= long, y= lat, fill = PercentageOfTotalVotes))
+  geom_polygon(data = yes_votes, aes(x= long, y= lat, fill = PercentageOfTotalVotes)) +
+  ggtitle("% Voters who Voted Yes on 1631")
 
 
 results
@@ -211,40 +182,35 @@ results
 
 
 ```{r}
+
+no_votes <- 
+  vote_loc %>%
+  filter(Candidate == "No") %>%
+  mutate(PercentageOfTotalVotes = as.numeric(.$PercentageOfTotalVotes)) %>%
+  mutate(Votes = as.numeric(.$Votes))
+
+no_results <-  w +
+  geom_polygon(data = no_votes, aes(x= long, y= lat, fill = PercentageOfTotalVotes))
+
+```
+
+```{r}
+no_results
 ```
 
 ```{r}
 
+sum_votes <- 
+votes %>%
+  group_by(Candidate) %>%
+  mutate(Total_votes = sum(Votes)) 
+
+ggplot(data = sum_votes, aes(x= Candidate, y = Total_votes)) +
+  geom_bar(stat = "identity") 
 ```
 
 ```{r}
 
-=======
-  qmplot(state)
-<<<<<<< HEAD
-```
-
-```{r}
-fav_count <- 
-tweets_location%>%
-  select(favorite_count,hashtags,reply_count)%>%
-  drop_na(hashtags)%>%
-  mutate(hashtags = tolower(hashtags)) %>%
-  separate(., hashtags, into = c("hashtag1", "hashtag2", "hashtag3"),
-           sep = " ")%>%
-  group_by(hashtag1)%>%
-  summarize_if(is.numeric, sum, na.rm=TRUE)
-```
-
-```{r}
-ui <- fluidPage()
-server <- function(input, output) {}
-shinyApp(ui = ui, server = server)
-```
-
-```{r}
-=======
->>>>>>> 860c79174f509e5bc93b7f7d7bfdd48a28c2c80d
 
 ```
 
@@ -265,14 +231,5 @@ shinyApp(ui = ui, server = server)
 
 ```{r}
 
-<<<<<<< HEAD
 
-```
-
-```{r}
-
-
-=======
->>>>>>> a3617bf1d2a478fddcc5567148521e57438f9916
->>>>>>> 860c79174f509e5bc93b7f7d7bfdd48a28c2c80d
 ```
