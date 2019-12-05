@@ -40,6 +40,7 @@ head(votes)
 cities <- read_csv("washington-cities.csv")
 ```
 
+
 ## Twitter users vs. voters map
 
 We need to clean the twitter users data and the city file to create a county location for all twitter users. 
@@ -197,27 +198,14 @@ no_results
 
 ```
 
-Providing an overall sum of votes for Yes and No.
+
 ```{r}
-
-sum_votes <- 
-votes %>%
-  group_by(Candidate) %>%
-  mutate(Total_votes = sum(Votes)) 
-
-ggplot(data = sum_votes, aes(x= Candidate, y = Total_votes)) +
-  geom_bar(stat = "identity", aes(fill = sum_votes$County)) 
 
 ```
 
 ```{r}
-
-head(users)
-```
-
-```{r}
-
-
+tweets %>%
+  distinct(status_id)
 ```
 
 ```{r}
