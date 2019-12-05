@@ -16,6 +16,7 @@ library(rjson)
 library(ggmap)
 library(maps)
 library(ggvis)
+library(ggplot2)
 
 citation("ggmap")
 ```
@@ -24,7 +25,7 @@ Then we load in all of our data files. These files were downloaded from TWitter 
 ```{r, cache=TRUE}
 
 #setting working directory
-setwd("~/Data-cleaning/final-paper/data")
+#setwd("~/Data-cleaning/final-paper/data")
 
 #uploading tweet data
 tweets <- read_csv("tweets.csv")
@@ -33,7 +34,7 @@ tweets <- read_csv("tweets.csv")
  users <- read_csv("twitter-users.csv")
 
 #importing voting reuslts
-votes <- read_csv("~/Data-cleaning/final-paper/data/washington-2018-results.csv")
+votes <- read_csv("washington-2018-results.csv")
 head(votes)
 
 #uploading list of cities in washington to match with user information
@@ -48,7 +49,7 @@ We need to clean the twitter users data and the city file to create a county loc
 #we drop the NAs
 users2 <-
   users %>%
-   select(user_id, location, screen_name) %>%
+   dplyr::select(user_id, location, screen_name) %>%
    drop_na(.)
 
 #seperate the location column into city and state
@@ -57,7 +58,7 @@ users2 <- separate(users2, location, into = c("city","state"), sep= (","))
 #get rid of all the white space
 users2 <-
 users2 %>%
-  select(user_id, screen_name, city) %>%
+  dplyr::select(user_id, screen_name, city) %>%
   mutate(city = tolower(trimws(.$city)))
 
 #then we need to clean the cities data
@@ -76,7 +77,7 @@ full_location <- merge(users2, cities, by = "city")
 #reordering city variables
 full_location <-
 full_location %>%
-  select(user_id, screen_name, city, county)
+  dplyr::select(user_id, screen_name, city, county)
 
 ```
 
@@ -90,7 +91,7 @@ tweets$user_id <- gsub("x", "", tweets$user_id)
 #merge user location with actual tweets
 tweets_location <-
   tweets %>%
-  select(user_id, screen_name, text, is_retweet, favorite_count,
+  dplyr::select(user_id, screen_name, text, is_retweet, favorite_count,
          reply_count, retweet_count, hashtags, followers_count) 
 
 #something weird is happening when I merge and I don't know why
@@ -107,7 +108,7 @@ target2 <- c("Washington State Initiative Measure No. 1631 Initiative Measure No
 
 votes <-
   votes %>%
-  select(County, Race, Candidate, Votes, PercentageOfTotalVotes) %>%
+  dplyr::select(County, Race, Candidate, Votes, PercentageOfTotalVotes) %>%
   filter(Race %in% c(target, target2)) %>%
   mutate(subregion= tolower(County))
 
@@ -210,23 +211,55 @@ ggplot(data = sum_votes, aes(x= Candidate, y = Total_votes)) +
 ```
 
 ```{r}
+#County data set
+#option 1  
+ggplot(votes, aes(x=County, y= Votes)) +
+ geom_bar(stat="identity") +
+ facet_wrap(~ Candidate, scale = "free", ncol = 4) + coord_flip()
 
+#option 2
+ggplot(votes, aes(County, Votes)) +
+geom_bar(stat = "identity", aes(fill = Candidate)) + coord_flip()
+
+
+#ggplot(votes) +
+ # geom_bar(mapping = aes(x = County,y= Votes,stat="identity")) +
+  #facet_wrap(~ Candidate, scale = "free", ncol = 4) 
+ # coord_polar("y", start=0)
 
 ```
 
 ```{r}
+#Twitter Activity
+#Timeline data
+timeline <-
+  tweets%>%
+  dplyr::select(user_id, created_at, hashtags)
 
+class(tweets$created_at) 
+timeline$created_at <- as.POSIXct(paste(timeline$created_at), format = "%Y/%m/%d",tz="UTC")
+class(timeline$created_at)
+
+# By Days
+ts_plot(timeline, by = "days", tz = "UTC")
+
+# By Weeks
+ts_plot(timeline, by = "week", tz = "UTC")
 
 ```
 
-```{r}
 
-
-```
 
 ```{r}
+#timeline1 %<>%
+  #separate(created_at, c("Date","Time"), sep = " ")
 
+#Timeplot <- timeline1%>%  
+#dplyr::select(user_id, Date, hashtags,Time)%>%  
+#$group_by(Date)%>%
+  #count
 
+#ggplot(Timeplot, aes(x = Date, y = n))
 ```
 
 ```{r}
