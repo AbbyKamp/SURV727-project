@@ -146,11 +146,7 @@ county %>%
 map2+
   geom_path(aes(x= long, y= lat, group = group), data = wash_counties)
 
-w <- ggplot(data = wash_counties, mapping =aes(x= long, y= lat, group = group)) +
-  geom_polygon(fill = "white", color = "black") +
-  geom_polygon(data = yes_votes, aes(x= long, y= lat, fill = PercentageOfTotalVotes))
-
-w
+w <- ggplot(data = wash_counties, mapping =aes(x= long, y= lat, group = group))
 ```
 
 Now that we have our state map, we need to combine it with the voting data to visualize how people vote. 
@@ -163,6 +159,7 @@ head(vote_loc)
 
 ```
 
+Then I filter the data so that we can visualize the percentage of voters who voted Yes on 1631.
 ```{r}
 
 yes_votes <-
@@ -179,7 +176,7 @@ results <-  w +
 results
 ```
 
-
+We can also see where the many "No" Voters are
 
 ```{r}
 
@@ -190,14 +187,17 @@ no_votes <-
   mutate(Votes = as.numeric(.$Votes))
 
 no_results <-  w +
-  geom_polygon(data = no_votes, aes(x= long, y= lat, fill = PercentageOfTotalVotes))
+  geom_polygon(data = no_votes, aes(x= long, y= lat, fill = PercentageOfTotalVotes)) +     ggtitle("% Voters who Voted No on 1631")
+
+no_results
 
 ```
 
 ```{r}
-no_results
+
 ```
 
+Providing an overall sum of votes for Yes and No.
 ```{r}
 
 sum_votes <- 
@@ -206,12 +206,13 @@ votes %>%
   mutate(Total_votes = sum(Votes)) 
 
 ggplot(data = sum_votes, aes(x= Candidate, y = Total_votes)) +
-  geom_bar(stat = "identity") 
+  geom_bar(stat = "identity", aes(fill = sum_votes$County)) 
+
 ```
 
 ```{r}
 
-
+head(users)
 ```
 
 ```{r}
