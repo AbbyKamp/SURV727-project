@@ -6,6 +6,7 @@ output: html_document
 ---
 
 ```{r}
+#IMP: Please start the code from line: #120 
 library(rtweet)
 library(tidyverse)
 library(dplyr)
@@ -13,14 +14,16 @@ library(tidyverse)
 library(gtrendsR)
 library(censusapi)
 library(reshape2)
-load("/Users/user/Desktop/Twitter/Location data.RData")
-load("/Users/user/Documents/GitHub/SURV727-project/Twitter R data.RData")
-tweets <- read_csv("tweets.csv")
-load("/Users/user/Desktop/Twitter/popular_tweets.RData")
 library(shiny)
 library(ggplot2)
+library(ggvis)
 library(DT)
 library(ggvis)
+library(gapminder)
+#load("/Users/user/Desktop/Twitter/Location data.RData")
+#load("/Users/user/Documents/GitHub/SURV727-project/Twitter R data.RData")
+tweets <- read_csv("tweets.csv")
+#load("/Users/user/Desktop/Twitter/popular_tweets.RData")
 
 ```
 
@@ -31,7 +34,7 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 ```{r}
-# Twitter API
+# Twitter API - Not to run for assignment
 create_token(
   app = "Project727",
   consumer_key = "",
@@ -45,6 +48,7 @@ create_token(
 Get token
 
 ```{r}
+#Not to run for assignment
 get_token()
 
 ```
@@ -52,26 +56,31 @@ get_token()
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 
 ```{r}
+#Not to run for assignment
 no_1631 <- search_fullarchive ("#NoOn1631",n = 100, env_name = "Dev2",fromDate ="201810010000",toDate = "201811080000")
 no_1631
 ```
 
 ```{r}
+#Not to run for assignment
 save_as_csv(no_1631,"no_1.csv",prepend_ids = TRUE, na = "",fileEncoding = "UTF-8") 
 ```
 
 ```{r}
+#Not to run for assignment
 no_1631_2 <- search_fullarchive ("#NoOn1631", n = 500, env_name = "Dev2", fromDate ="201810010000",toDate = "201811080000")
 no_1631_2
 ```
 
 ```{r}
+#Not to run for assignment
 save_as_csv(no_1631,"no_2.csv",prepend_ids = TRUE, na = "",fileEncoding = "UTF-8") 
 ```
 
 Pulling No tweets timeline: weekly
 
 ```{r}
+#Not to run for assignment
 ##PULLING NO TWEETS##
 no_week1 <- search_fullarchive("#NoOn1631 OR #Noto1631", n = 100, env_name = "Dev2",
                                 fromDate ="201810090000",toDate = "201810152359")
@@ -91,12 +100,14 @@ no_4_weeks <- do.call("rbind", list(no_week1, no_week2, no_week3, no_week4))
 Merging with last 
 
 ```{r}
+#Not to run for assignment
 no_merge_complete <- do.call("rbind", list(no_4_weeks,no_1631_2, no_1631))
 ```
 
 # Data Cleaning > using strsplit code to split elements of a character vector into substrings according to the matches 
 ```{r}
 #identifying bad strings
+#Not to run for assignment
 bad_strings <-  twitter_users_excel$location
 twitter_users_excel$ss <- strsplit(bad_strings, ", ", fixed= TRUE)
 colsplit(twitter_users_excel$ss, ", ", c("A", "B"))
@@ -107,7 +118,7 @@ loc <- data.frame(colsplit(twitter_users_excel$ss, ", ", c("A", "B")))
 
 
 ```{r}
-# Data visulaization - Assignment Last 
+# Data visulaization - Assignment Starts from here
 popular_tweets <- 
   tweets %>%
   dplyr::select(hashtags, reply_count, favorite_count, text) %>%
@@ -119,28 +130,13 @@ popular_tweets <-
   summarize_if(is.numeric, sum, na.rm=TRUE)
 
 ```
-```{r}
-popular_tweets%>%
-  filter(hashtag1 >50)%>%
-  ggvis(~favorite_count, ~ reply_count) %>%
-
-      filter(hashtag1%in% 
-           eval(input_checkboxgroup(c("yeson1631",
-                                    "electionday",
-                                    "climate",
-                                    "electionday2018",
-                                    "noon1631",
-                                    "initiative1631"),
-                                    label = "Choose Hashtag:",
-                                    selected = "yeson1631"))) %>% 
-layer_points(size := input_numeric(5 , label = "Point size"))
-
-
-```
 
 ```{r}
+#This interactive graph shows the reply count and favorite count of the primary hashtags used by twitter users. Top 6 hashtags were extracted from 1881 tweets and their primary hashtags were the summed up for total favorite count and reply count. 
+
 popular_tweets%>%
   filter(hashtag1 >50)%>%
+  ggvis(x= ~favorite_count,y= ~ reply_count) %>%
   filter(hashtag1%in% 
            eval(input_checkboxgroup(c("yeson1631",
                                     "electionday",
@@ -150,13 +146,50 @@ popular_tweets%>%
                                     "initiative1631"),
                                     label = "Choose Hashtag:",
                                     selected = "yeson1631"))) %>% 
+
+layer_points(fill = ~factor(hashtag1), size := input_numeric(60 , label = "Point size"))%>%
+  add_tooltip(function(popular_tweets){paste0(
+    ### <b>
+    "Number of favorite count received: ", popular_tweets$favorite_count, "<br>",
+     ### </b>
+    "Number of reply count received: ", popular_tweets$reply_count)})
   
-  ggvis(x = input_select(label = "Choose Support variable:", 
-                        choices = c("reply_count", "favorite_count"), 
-                        selected = "reply_count"),
-        
+
+```
+
+```{r}
+user_support <- 
+  tweets %>%
+  dplyr::select(hashtags, reply_count, favorite_count,text,screen_name) %>%
+  drop_na(hashtags) %>%
+  mutate(hashtags = tolower(hashtags)) %>%
+  separate(., hashtags, into = c("hashtag1", "hashtag2", "hashtag3"),
+           sep = " ")%>%
+  filter(hashtag1=="yeson1631"|hashtag1=="noon1631")%>%
+  group_by(screen_name) %>%
+  count(hashtag1)
+```
 
 
+```{r}
+#This interactive looks at the screen_name of twitter users who are most actively participating in tweeting about initiative 1631. The graph shows that there is much greater positive support for initiative 1631, however most of the support is from a few top users; which seems to be from climate groups rather than individuals. 
+
+user_support%>%
+  filter(n>2)%>%
+ggvis(x = ~n, y = ~ screen_name,
+       opacity := input_slider(0, 1, label = "Opacity",value=1),
+       size := input_slider(1, 100, value = 50, step = 10, 
+                            label = "Point Size")) %>%
+    filter(hashtag1%in% 
+           eval(input_checkboxgroup(c("yeson1631",
+                                    "noon1631"),
+                                    label = "Choose Hashtag:",
+                                    selected = "yeson1631"))) %>% 
+layer_points(fill = ~factor(hashtag1)) %>%
+  add_axis('y', title=' ', properties=axis_props(labels=list(fontSize=12), title=list(fontSize=16,dy=-25)))%>%
+  add_tooltip(function(user_support){paste0(
+    ### <b>
+    "Number of times hashtag was tweeted by user: ", user_support$n)})
 ```
 
 
