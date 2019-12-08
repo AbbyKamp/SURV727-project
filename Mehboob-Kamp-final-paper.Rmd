@@ -57,6 +57,8 @@ library(rjson)
 library(ggmap)
 library(maps)
 library(ggvis)
+library(ggplot2)
+
 ```
 
 
@@ -147,6 +149,8 @@ We also obtained the user data that was associated with the Twitter accounts in 
 ```{r, include = FALSE}
 #this won't work if you don't have the original R object, so commenting it out and adding our results as a CSV
 #users <- users_data(tweets)
+#set your working directory to where you have saved your data
+setwd("~/Data-cleaning/final-paper/data")
 
 users <- read_csv("twitter-users.csv")
 ```
@@ -163,6 +167,7 @@ votes <- read_csv("~/Data-cleaning/final-paper/data/washington-2018-results.csv"
 ```{r, include = FALSE}
 # to avoid running the code again, we uploaded the Tweets file as CSV
 #setwd()
+
 tweets <- read_csv("Data-cleaning/final-paper/data/tweets.csv")
 
 #removing duplicates
@@ -171,8 +176,6 @@ tweets <- tweets[!duplicated(tweets$status_id), ]
 
 
 ## Results
-
-This section presents the main results.
 
 We created an interactive graph that shows the reply count and favorite count of the primary hashtags used by twitter users. Top 6 hashtags were extracted from 1881 tweets and their primary hashtags were the summed up for total favorite count and reply count. 
 
@@ -332,6 +335,95 @@ favs %>%
     "favorites: ", favs$favorite_count, "<br>",
     "text: ", as.character(favs$text), "<br>")}, "hover")
 ```
+
+
+
+```{r}
+#option 1  
+ggplot(votes, aes(x=County, y= Votes)) +
+ geom_bar(stat="identity") +
+ facet_wrap(~ Candidate, scale = "free", ncol = 4) + coord_flip()
+
+#option 2
+ggplot(votes, aes(County, Votes)) +
+geom_bar(stat = "identity", aes(fill = Candidate)) + coord_flip()
+
+```
+
+
+Creating a table that shows the most popular tweets (most likes)
+
+```{r}
+
+most_favs <- 
+tweets %>%
+  select(screen_name, text, favorite_count, retweet_count, reply_count, quote_count) %>%
+  filter(favorite_count >= 5) %>%
+  arrange(desc(favorite_count))
+
+formattable(most_favs)
+
+```
+We will also create a table to see the tweets that are shared the most.
+
+```{r}
+most_retweets <-
+tweets %>%
+  select(screen_name, text, favorite_count, retweet_count, reply_count, quote_count) %>%
+  filter(retweet_count >= 5) %>%
+  arrange(desc(retweet_count))
+
+formattable(most_retweets)
+
+```
+
+Now exploring the user data
+```{r}
+loc_users <-
+users %>%
+  group_by(location) %>%
+  tally() %>%
+  filter(n >= 2) %>%
+  tidyr::drop_na() %>%
+  arrange(desc(n))
+
+loc_users
+```
+
+
+Many of these accounts represent organizations and activists groups. I'm filtering by status count, which means the users who post the most tweets will be listed first.
+```{r}
+
+users %>%
+  select(screen_name, name, description, statuses_count, followers_count) %>%
+  group_by(screen_name) %>%
+  filter(statuses_count >= 5) %>%
+  arrange(desc(followers_count))
+
+```
+
+Twitter has a strong level of support for Initiatie 1631, but the voting results are very different. Below is a chart that displays the overall sum of votes for Yes and No.
+```{r}
+
+sum_votes <- 
+votes %>%
+  group_by(Candidate) %>%
+  mutate(Total_votes = sum(Votes)) 
+
+ggplot(data = sum_votes, aes(x= Candidate, y = Total_votes))+
+  geom_bar(stat = "identity",  position=position_dodge()) +
+    geom_text(
+    aes(label = Total_votes),
+    position = position_dodge(1),
+    vjust = 0) +
+  ggtitle("Initiative 1631 Voting Results") +
+  xlab("") +
+  ylab("Total Votes") +
+  theme_classic()
+
+```
+
+
 ## Mapping
 We want to map the voting results to see how it differs from the tweets.
 
@@ -409,12 +501,23 @@ no_results <-  w +
 
 no_results
 
-
 ```
 
 ```{r}
 # What happens here depends on the specific project
 ```
+
+
+```{r}
+# What happens here depends on the specific project
+```
+
+
+```{r}
+# What happens here depends on the specific project
+```
+
+
 ## Discussion
 
 This section summarizes the results and may briefly outline advantages and limitations of the work presented.
