@@ -1,8 +1,9 @@
+
 ---
 title: "Fundamentals of Computing and Data Display"
 author: "Rameesha Mehboob and Abigail Kamp"
 date: "`r Sys.Date()`"
-output:
+ output:
   pdf_document:
     df_print: kable
     toc: yes
@@ -20,7 +21,7 @@ In 2018, Initiative 1631 was on the ballot in Washington state. It asked voters:
 
 Should this measure be enacted into law?""
 
-The Initiative would have enacted a fee a $15 per ton of carbon emitted in 2020 and rise $2 per year until 2035. The revenue would have been invested in "clean air and energy", "clean water and health forests", and "healthy communities". Initiative 1631 was supported by a variety of climate groups, and received endorsements from many activist groups. There was a broad coalition supporting the measure in a state with left-leaning Washington politics, which gave supporters hope that it would pass. However, like many other tax increases, carbon taxes proved unpopular with voters. The referendum did not pass (56% to 44%). (Source:  https://www.vox.com/energy-and-environment/2018/9/28/17899804/washington-1631-results-carbon-fee-green-new-deal)
+The Initiative would have enacted a fee a $15 per ton of carbon emitted in 2020 and rise $2 per year until 2035. The revenue would have been invested in "clean air and energy", "clean water and health forests", and "healthy communities". Initiative 1631 was supported by a variety of climate groups, and received endorsements from many activist groups. There was a broad coalition supporting the measure in a state with left-leaning Washington politics, which gave supporters hope that it would pass. However, like many other tax increases, carbon taxes proved unpopular with voters. The referendum did not pass (56% to 44%) (Roberts 2018).
 
 While this referendum was a defeat for climate activists, it is an interesting case study to compare the online support for a ballot initiative with actual voting results. For our analysis, we collect Twitter data about Initiative 1631 and compare it to the actual voting results in Washington state. 
 
@@ -35,6 +36,7 @@ library(ggmap)
 library(maps)
 library(ggvis)
 library(ggplot2)
+library(formattable)
 ```
 
 
@@ -180,7 +182,7 @@ users <- read_csv("twitter-users.csv")
 
 All location data in Twitter is input by the user, so it lacks uniformity and is difficult to work with. However, we start by trying to isolate the city from the user location data. Of note, this information is entered by the user and may be not accurate, but there is no way to verify location. 
 
-To match the Twitter-user entered city, we need to match that with the relevant county information. We obtained a list of Washington cities and their respective counties from the Washington Court System Website (https://www.courts.wa.gov/court_dir/?fa=court_dir.countycityref). The Washington Court system lists each city and their county in alphabetically order, and we created a CSV from this information. 
+To match the Twitter-user entered city, we need to match that with the relevant county information. We obtained a list of Washington cities and their respective counties from the Washington Court System Website. The Washington Court system lists each city and their county in alphabetically order, and we created a CSV from this information. 
 
 ```{r, include = FALSE}
 #begin cleaning the user data by dropping the NAs and separating into city and state where possible
@@ -403,7 +405,7 @@ hashes2 <-
   count(hashtag2) %>%
   arrange(desc(n))
 
-hashes
+hashes2
 
 second_tag <- 
 hashes2 %>%
@@ -475,7 +477,9 @@ tweets %>%
 ```
 
 ```{r}
-most_favs
+favs2 <- formattable(head(most_favs))
+
+as.table(favs2)
 ```
 
 We will also create a table to see the tweets that are shared the most.
@@ -492,9 +496,6 @@ tweets %>%
 most_retweets
 ```
 
-# User Results
-
-Now exploring the user data
 ```{r, include = FALSE, echo = FALSE}
 loc_users <-
 users %>%
@@ -638,10 +639,14 @@ no_results
 
 ```
 
+
 ## Discussion
 
 Based on these findings, it appears that Initiative 1631 enjoyed far greater support among Twitter users than the voting population. However, the Twitter population is not a representative sample of the voting population. Further, many of the supporters on Twitter represented activist groups who used it to advertise or drum up support for the carbon tax. Twitter also over-represented urban and out-of-state residents, and voters in rural and even suburban areas are not well-represented on Twitter.
 
 
 ## References
+Roberts, David. "Washington votes no on a carbon tax - again. Vox. November 6, 2018. "https://www.vox.com/energy-and-environment/2018/9/28/17899804/washington-1631-results-carbon-fee-green-new-deal
+
+Washington Courts. "Court Directory: Country-City Reference List." https://www.courts.wa.gov/court_dir/?fa=court_dir.countycityref
 
