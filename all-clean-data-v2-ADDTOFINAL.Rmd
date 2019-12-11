@@ -24,7 +24,7 @@ Creating a table that shows the most popular tweets (most likes)
 
 most_favs <- 
 tweets %>%
-  select(screen_name, text, favorite_count, retweet_count, reply_count, quote_count) %>%
+  dplselect(screen_name, text, favorite_count, retweet_count, reply_count, quote_count) %>%
   filter(favorite_count >= 5) %>%
   arrange(desc(favorite_count))
 
@@ -113,7 +113,7 @@ To match the Twitter-user entered city, we need to match that with the relevant 
 ```{r, include = FALSE}
 #begin cleaning the user data by dropping the NAs and separating into city and state where possible
 users <-
-  users %>%
+  dplyr::users %>%
    select(user_id, location, screen_name) %>%
    drop_na(.)
 
@@ -239,20 +239,51 @@ str(tweets_location$subregion)
 Then we try and map!
 
 ```{r}
+Location_data <- location_merge %>%
+  dplyr::select(user_id, screen_name, city, subregion, long, lat) %>%
+  group_by(city)  
+
+Location_data 
+  
 map2 +
-  geom_path(aes(x= long, y= lat, group = group), data = wash_counties) +
-  geom_point(data = tweets_location2, aes(x= long, y = lat, group = user_id), color = "green")
+  geom_point(data = Location_data, aes(x = long, y = lat, group =city, size=n))  +
+  labs(title = "Tweet Locations")
+
 
 ```
 
 
 
 ```{r}
+#step 1: Get the washington county data
 
+county<- map_data("county")
+
+wash_counties <-
+county %>%
+  filter(region == "washington") 
+
+#cleaning the full location data set 
+
+full_location <-
+  #full_location %>%
+  #mutate(county = tolower(trimws(.$county, "l"))) 
+
+
+#renaming column before merging
+colnames(full_location)[4] <- "subregion"
+
+location_merge <- right_join(full_location, wash_counties, by = "subregion")
+
+location_merge<- location_merge[!duplicated(location_merge$user_id), ]
+
+w <- ggplot(data = location_merge, mapping =aes(x= long, y= lat, group = group))
+#now we are merging the county data with the voting results into one file
+vote_loc <- right_join(wash_counties, votes, by = "subregion")
 
 ```
 
-
+Now mapping the tweets
 
 ```{r}
 
