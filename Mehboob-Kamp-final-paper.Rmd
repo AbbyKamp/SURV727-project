@@ -124,7 +124,7 @@ We do not want to keep running the Twitter search_fullarchive function because i
 # to avoid running the code again, we uploaded the Tweets file as CSV
 #setwd()
 
-tweets <- read_csv("Data-cleaning/final-paper/data/tweets.csv")
+tweets <- read_csv("tweets.csv")
 
 #removing duplicates
 tweets <- tweets[!duplicated(tweets$status_id), ]
@@ -136,7 +136,7 @@ We also obtained the user data that was associated with the Twitter accounts in 
 #this won't work if you don't have the original R object, so commenting it out and adding our results as a CSV
 #users <- users_data(tweets)
 #set your working directory to where you have saved your data
-setwd("~/Data-cleaning/final-paper/data")
+#setwd("~/Data-cleaning/final-paper/data")
 
 users <- read_csv("twitter-users.csv")
 ```
@@ -149,7 +149,7 @@ To match the Twitter-user entered city, we need to match that with the relevant 
 #begin cleaning the user data by dropping the NAs and separating into city and state where possible
 users <-
   users %>%
-   select(user_id, location, screen_name) %>%
+   dplyr::select(user_id, location, screen_name) %>%
    drop_na(.)
 
 users <- separate(users, location, into = c("city","state"), sep= (","))
@@ -157,14 +157,14 @@ users <- separate(users, location, into = c("city","state"), sep= (","))
 #need to get rid of the white space
 users <-
 users %>%
-  select(user_id, screen_name, city) %>%
+  dplyr::select(user_id, screen_name, city) %>%
   mutate(city = tolower(trimws(.$city)))
 ```
 Here we merge the cities file with the user file. 
 
 ```{r, include= FALSE}
 #uploading list of cities in washington to match with user information
-#cities <- read_csv("washington-cities.csv")
+cities <- read_csv("washington-cities.csv")
 
 #renaming to match with other
 colnames(cities)[1] <- "city"
@@ -186,7 +186,7 @@ full_location <- merge(users, cities, by = "city")
 #reordering city variables
 full_location <-
 full_location %>%
-  select(user_id, screen_name, city, county)
+  dplyr::select(user_id, screen_name, city, county)
 
 #annoyingly full_location has an extra x in the user ID so need to remove
 full_location$user_id <- gsub("x", "", full_location$user_id)
@@ -202,7 +202,7 @@ To obtain the voting results, we went to the Washington Secretary of State webpa
 
 ```{r, include = FALSE}
 # download the file to your working directly and upload it as a CSV
-votes <- read_csv("~/Data-cleaning/final-paper/data/washington-2018-results.csv")
+votes <- read_csv("washington-2018-results.csv")
 ```
 
 
@@ -216,7 +216,7 @@ We created an interactive graph that shows the reply count and favorite count of
 
 popular_tweets <- 
   tweets %>%
-  select(hashtags, reply_count, favorite_count, text) %>%
+  dplyr::select(hashtags, reply_count, favorite_count, text) %>%
   drop_na(hashtags) %>%
   mutate(hashtags = tolower(hashtags)) %>%
   separate(., hashtags, into = c("hashtag1", "hashtag2", "hashtag3"),
@@ -237,12 +237,19 @@ popular_tweets%>%
                                     label = "Choose Hashtag:",
                                     selected = "yeson1631"))) %>% 
 
-layer_points(fill = ~factor(hashtag1), size := input_numeric(60 , label = "Point size"))%>%
+layer_points(fill = ~factor(hashtag1), size := input_numeric(80 , label = "Point size"))%>%
   add_tooltip(function(popular_tweets){paste0(
     ### <b>
-    "Number of favorite count received: ", popular_tweets$favorite_count, "<br>",
+    "Number of Favorite Count received: ", popular_tweets$favorite_count, "<br>",
      ### </b>
-    "Number of reply count received: ", popular_tweets$reply_count)})
+    "Number of Reply Count Received: ", popular_tweets$reply_count)}) %>%
+  add_axis("x", title_offset = 40, title = "Number of Favorite Count Received", properties = axis_props(title = list(fontSize = 12))) %>%
+  add_axis("y", title_offset = 40, title = "Number of Reply Count Received", properties = axis_props(title = list(fontSize = 12)))%>%
+  add_axis("x", orient = "top", ticks = 0, title = "Twitter Support",
+           properties = axis_props(
+             axis = list(stroke = "white"),
+             title = list(fontSize = 12),
+             labels = list(fontSize = 0)))
   
 
 ```
@@ -266,9 +273,9 @@ user_support <-
 user_support%>%
   filter(n>2)%>%
 ggvis(x = ~n, y = ~ screen_name,
-       opacity := input_slider(0, 1, label = "Opacity",value=1),
-       size := input_slider(1, 100, value = 50, step = 10, 
-                            label = "Point Size")) %>%
+       fill = ~continent,
+        size := 100,
+        opacity := 1) %>%
     filter(hashtag1%in% 
            eval(input_checkboxgroup(c("yeson1631",
                                     "noon1631"),
@@ -278,17 +285,24 @@ layer_points(fill = ~factor(hashtag1)) %>%
   add_axis('y', title=' ', properties=axis_props(labels=list(fontSize=12), title=list(fontSize=16,dy=-25)))%>%
   add_tooltip(function(user_support){paste0(
     ### <b>
-    "Number of times hashtag was tweeted by user: ", user_support$n)})
+    "Number of times hashtag was tweeted by user: ", user_support$n)})%>%
+  add_axis("x", title_offset = 40, title = "Number of Tweets by Twitter User", properties = axis_props(title = list(fontSize = 12))) %>%
+  add_axis("x", orient = "top", ticks = 0, title = "Evaluating Twitter Support with Screen Name ",
+           properties = axis_props(
+             axis = list(stroke = "white"),
+             title = list(fontSize = 12),
+             labels = list(fontSize = 0)))
 
 ```
 
 We then plot the frequency of different hashtags. I start with the first hashtag that people use in the Tweet. Yeson1631 remains the most frequent hashtag.
 
 ```{r}
-#manipulating my dataset to get the hashtags
+#manipulating my dataset to get the hashtags 
+#work on this and shift the axis
 hashes <-
   tweets %>%
-  select(hashtags, reply_count, favorite_count, text) %>%
+  dplyr::select(hashtags, reply_count, favorite_count, text) %>%
   tidyr::drop_na(hashtags) %>%
   mutate(hashtags = tolower(hashtags)) %>%
   tidyr::separate(., hashtags, into = c("hashtag1", "hashtag2", "hashtag3"),
@@ -320,9 +334,11 @@ Now looking at their second choice hastag to see if the second hashtag mentioned
 
 ```{r}
 
+#shift the axis, add title and label the axis
+
 hashes2 <-
   tweets %>%
-  select(hashtags, reply_count, favorite_count, text) %>%
+  dplyr::select(hashtags, reply_count, favorite_count, text) %>%
   tidyr::drop_na(hashtags) %>%
   mutate(hashtags = tolower(hashtags)) %>%
   tidyr::separate(., hashtags, into = c("hashtag1", "hashtag2", "hashtag3"),
@@ -355,7 +371,7 @@ Next we select  the mos popular tweets and we graph the tweets as points to see 
 ```{r}
 favs <-
   tweets %>%
-  select(hashtags, reply_count, favorite_count, text, user_id) %>%
+  dplyr::select(hashtags, reply_count, favorite_count, text, user_id) %>%
   tidyr::drop_na(favorite_count) %>%
   arrange(desc(favorite_count))
 
