@@ -21,6 +21,7 @@ library(shiny)
 library(ggplot2)
 library(DT)
 library(ggvis)
+load("/Users/user/Desktop/Twitter/old files/all_tweets_first_try (1).RData")
 
 ```
 
