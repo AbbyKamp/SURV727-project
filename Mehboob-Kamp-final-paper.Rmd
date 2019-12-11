@@ -20,9 +20,9 @@ In 2018, Initiative 1631 was on the ballot in Washington state. It asked voters:
 
 Should this measure be enacted into law?""
 
-The Initiative would have enacted a fee a $15 per ton of carbon emitted in 2020 and rise $2 per year until 2035. The revenue would have been invested in "clean air and energy", "clean water and health forests", and "healthy communities". Initiative 1631 was supported by a variety of climate groups, and recieved endorsements from many activist groups. There was a broad coalition supporting the measure in a state with left-leaning Washington politics, which gave supporters hope that it would pass. However, like many other tax increases, carbon taxes proved unpopular with voters. The referendum did not pass (56% to 44%). (Source:  https://www.vox.com/energy-and-environment/2018/9/28/17899804/washington-1631-results-carbon-fee-green-new-deal)
+The Initiative would have enacted a fee a $15 per ton of carbon emitted in 2020 and rise $2 per year until 2035. The revenue would have been invested in "clean air and energy", "clean water and health forests", and "healthy communities". Initiative 1631 was supported by a variety of climate groups, and received endorsements from many activist groups. There was a broad coalition supporting the measure in a state with left-leaning Washington politics, which gave supporters hope that it would pass. However, like many other tax increases, carbon taxes proved unpopular with voters. The referendum did not pass (56% to 44%). (Source:  https://www.vox.com/energy-and-environment/2018/9/28/17899804/washington-1631-results-carbon-fee-green-new-deal)
 
-While this referendum was a defeat for climate activists, it is an interesting case study to compare the online support for a ballot initiative with actual voting results. For our analysis, we collect Twitter data about Initative 1631 and compare it to the actual voting results in Washington state. 
+While this referendum was a defeat for climate activists, it is an interesting case study to compare the online support for a ballot initiative with actual voting results. For our analysis, we collect Twitter data about Initiative 1631 and compare it to the actual voting results in Washington state. 
 
 ```{r, include = FALSE}
 #First we load in our packages
@@ -35,14 +35,12 @@ library(ggmap)
 library(maps)
 library(ggvis)
 library(ggplot2)
-library(formattable)
 ```
-
 
 
 ## Data
 
-First, we begin by collecting Twitter data. We each applied and obtained Twitter Enterprise accounts, which allowed us to access the entire Twitter archive. (For future researchers, each account is allowed free access to 5,000 Tweets. Once the limit is reached, TWitter will charge for further aceess.)
+First, we begin by collecting Twitter data. We each applied and obtained Twitter Enterprise accounts, which allowed us to access the entire Twitter archive. (For future researchers, each account is allowed free access to 5,000 Tweets. Once the limit is reached, Twitter will charge for further access.)
 
 ```{r, include = FALSE, eval = FALSE}
 # Abby's Twitter API token. API information removed for security purposes
@@ -122,13 +120,48 @@ save_as_csv(all_tweets,"tweets.csv",prepend_ids = TRUE, na = "",fileEncoding = "
 
 ```
 
+Trying to do a final pull
+We are doing one more pull to determine we get a natural sample of tweets, so we pull an extra 500 tweets that just mention Initiative 1631 to ensure that we have a more representative sample. This pull results in 490 tweets.
+
+```{r, include = FALSE, eval = FALSE}
+neutral_check <- search_fullarchive("#initiative1631 OR (initiative 1631)", 
+                                    n = 500, env_name = "SURV727", 
+                                    fromDate ="201810090000",  toDate = "201811062359")
+
+save_as_csv(neutral_check,"final-check-tweets.csv",prepend_ids = TRUE, na = "",fileEncoding = "UTF-8")
+
+```
+
+We take the new tweets and combine it with our other 1689 tweets. 
+
+```{r, include = FALSE, eval = FALSE}
+all_tweets <- rbind(tweets, neutral_check)
+
+save_as_csv(all_tweets,"all_tweets.csv",prepend_ids = TRUE, na = "",fileEncoding = "UTF-8")
+
+```
+
+We check for duplicates by status_id, which is unique to each tweet. No duplicates were found. 
+
+```{r, include = FALSE, eval = FALSE}
+all_tweets <- all_tweets[!duplicated(all_tweets$status_id), ]
+
+```
+
+With the lat_lng function, we can also get the latitude and longitude of the tweet. This function from rtweet pulls all available latitude and longitude information for each tweet. However, this pull only results in two tweets with location information. This is because Twitter users need to allow Twitter to pull their geolocation and the vast majority of users opt out. 
+
+```{r, include = FALSE, eval = FALSE}
+new_location <- lat_lng(neutral_check)
+
+```
+
 We do not want to keep running the Twitter search_fullarchive function because it will eventually charge us money to pull more data, so we saved the data in CSV file. Then we removed duplicate tweets. There were about 400 duplicate tweets in the file.
 
 ```{r, include = FALSE}
 # to avoid running the code again, we uploaded the Tweets file as CSV
 #setwd()
 
-tweets <- read_csv("tweets.csv")
+tweets <- read_csv("all_tweets.csv")
 
 #removing duplicates
 tweets <- tweets[!duplicated(tweets$status_id), ]
@@ -136,7 +169,7 @@ tweets <- tweets[!duplicated(tweets$status_id), ]
 
 We also obtained the user data that was associated with the Twitter accounts in the file above. The "users_data" function in rtweet pulls information about the individual users which we stored in a new file.
 
-```{r, include = FALSE}
+```{r, include = FALSE, results = "hide", message= FALSE}
 #this won't work if you don't have the original R object, so commenting it out and adding our results as a CSV
 #users <- users_data(tweets)
 #set your working directory to where you have saved your data
@@ -145,9 +178,9 @@ We also obtained the user data that was associated with the Twitter accounts in 
 users <- read_csv("twitter-users.csv")
 ```
 
-All location data in TWitter is input by the user, so it lacks uniformity and is difficult to work with. However, we start by trying to isolate the city from the user location data. Of note, this information is entered by the user and may be not accurate, but there is no way to verify location. 
+All location data in Twitter is input by the user, so it lacks uniformity and is difficult to work with. However, we start by trying to isolate the city from the user location data. Of note, this information is entered by the user and may be not accurate, but there is no way to verify location. 
 
-To match the Twitter-user entered city, we need to match that with the relevant county information. We obtained a list of Washington cities and their respective counties from the Washington Court System Website (https://www.courts.wa.gov/court_dir/?fa=court_dir.countycityref). The Washington Court system lists each city and their county in alphahabetically order, and we created a CSV from this information. 
+To match the Twitter-user entered city, we need to match that with the relevant county information. We obtained a list of Washington cities and their respective counties from the Washington Court System Website (https://www.courts.wa.gov/court_dir/?fa=court_dir.countycityref). The Washington Court system lists each city and their county in alphabetically order, and we created a CSV from this information. 
 
 ```{r, include = FALSE}
 #begin cleaning the user data by dropping the NAs and separating into city and state where possible
@@ -164,7 +197,8 @@ users %>%
   dplyr::select(user_id, screen_name, city) %>%
   mutate(city = tolower(trimws(.$city)))
 ```
-Here we merge the cities file with the user file. 
+
+We conduct more cleaning on the file. 
 
 ```{r, include= FALSE}
 #uploading list of cities in washington to match with user information
@@ -210,13 +244,13 @@ votes <- read_csv("washington-2018-results.csv")
 ```
 
 
-## Results
+# Results
 
-# Tweet Results
+## Tweet Results
 
-We created an interactive graph that shows the reply count and favorite count of the primary hashtags used by twitter users. Top 6 hashtags were extracted from 1686 tweets and their primary hashtags were the summed up for total favorite count and reply count. 
+We created an  graph that shows the reply count and favorite count of the primary hashtags used by twitter users. Top 6 hashtags were extracted from 1686 tweets and their primary hashtags were the summed up for total favorite count and reply count. 
 
-```{r, warning = FALSE}
+```{r, warning = FALSE, include = FALSE}
 
 popular_tweets <- 
   tweets %>%
@@ -228,6 +262,7 @@ popular_tweets <-
   group_by(hashtag1) %>%
   summarize_if(is.numeric, sum, na.rm=TRUE)
 
+popular_tweets_ggvis <-
 popular_tweets%>%
   filter(hashtag1 >50)%>%
   ggvis(x= ~favorite_count,y= ~ reply_count) %>%
@@ -239,7 +274,12 @@ popular_tweets%>%
                                     "noon1631",
                                     "initiative1631"),
                                     label = "Choose Hashtag:",
-                                    selected = "yeson1631"))) %>% 
+                                    selected = c("yeson1631", 
+                                    "electionday",
+                                    "climate",
+                                    "electionday2018",
+                                    "noon1631",
+                                    "initiative1631")))) %>% 
 
 layer_points(fill = ~factor(hashtag1), size := input_numeric(80 , label = "Point size"))%>%
   add_tooltip(function(popular_tweets){paste0(
@@ -258,9 +298,13 @@ layer_points(fill = ~factor(hashtag1), size := input_numeric(80 , label = "Point
 
 ```
 
-We also looked at the screen_names of twitter users who are most actively participating in tweeting about initiative 1631. The graph shows that there is  greater positive support for Initiative 1631. However most of the support is from several top users; which seems to be from activist groups rather than individuals. 
+```{r, warning= FALSE}
+popular_tweets_ggvis
+```
 
-```{r, warning = FALSE}
+We also looked at the screen names of twitter users who are most actively participating in tweeting about Initiative 1631. The graph shows that there is  greater positive support for Initiative 1631. However most of the support is from several top users; which seems to be from activist groups rather than individuals. 
+
+```{r, warning = FALSE, include = FALSE}
 user_support <- 
   tweets %>%
   dplyr::select(hashtags, reply_count, favorite_count,text,screen_name) %>%
@@ -273,7 +317,7 @@ user_support <-
   count(hashtag1)
 
 
-
+user_support_ggvis <-
 user_support%>%
   filter(n>2)%>%
 ggvis(x = ~n, y = ~ screen_name,
@@ -284,7 +328,7 @@ ggvis(x = ~n, y = ~ screen_name,
            eval(input_checkboxgroup(c("yeson1631",
                                     "noon1631"),
                                     label = "Choose Hashtag:",
-                                    selected = "yeson1631"))) %>% 
+                                    selected = c("yeson1631",  "noon1631")))) %>% 
 layer_points(fill = ~factor(hashtag1)) %>%
   add_axis('y', title=' ', properties=axis_props(labels=list(fontSize=12), title=list(fontSize=16,dy=-25)))%>%
   add_tooltip(function(user_support){paste0(
@@ -299,9 +343,14 @@ layer_points(fill = ~factor(hashtag1)) %>%
 
 ```
 
+
+```{r, warning= FALSE}
+user_support_ggvis
+```
+
 We then plot the frequency of different hashtags. I start with the first hashtag that people use in the Tweet. Yeson1631 remains the most frequent hashtag.
 
-```{r, warning = FALSE}
+```{r, warning = FALSE, include = FALSE}
 
 hashes <-
   tweets %>%
@@ -332,13 +381,15 @@ layer_points(fill = ~factor(hashtag1)) %>%
              align = "right", baseline = "left")))
 
 
+```
 
+```{r, warning = FALSE}
 first_tag
 ```
 
-Now looking at their second choice hastag to see if the second hashtag mentioned in a post are different from the first. Based on our results, it looks like most of the hashtags remain positive.
+Now looking at their second choice hashtag to see if the second hash tag mentioned in a post are different from the first. Based on our results, it looks like most of the hashtags remain positive.
 
-```{r, warning = FALSE}
+```{r, warning = FALSE, include = FALSE}
 
 hashes2 <-
   tweets %>%
@@ -370,14 +421,16 @@ layer_points(fill = ~factor(hashtag2)) %>%
            (labels =list(angle = 0, align = "left", baseline = "middle"))) %>%
    add_axis("y", title = '', properties = axis_props(labels = list(angle = 0, 
              align = "right", baseline = "left")))
+```
 
+```{r, warning= FALSE}
 second_tag
 
 ```
 
-Next we select  the mos popular tweets and we graph the tweets as points to see which are the most favorited and replied to. It will be useful to know if some are retweeted more but aren't favorited, or vice versa.
+Next we select  the most popular tweets and we graph the tweets as points to see which are the most Favorited and replied to. It will be useful to know if some are re tweeted more but aren't Favorited, or vice avers.
 
-```{r}
+```{r, include = FALSE}
 
 #Not to be included in the final paper
 favs <-
@@ -406,76 +459,79 @@ favs %>%
 
 ```
 
+```{r, warning= FALSE}
+favs
+```
+
 Then we created a table to display the tweets that have the most likes.
 
-```{r}
+```{r, include = FALSE}
 
 most_favs <- 
 tweets %>%
   dplyr::select(screen_name, text, favorite_count, retweet_count, reply_count, quote_count) %>%
   filter(favorite_count >= 5) %>%
   arrange(desc(favorite_count))
+```
 
-formattable(most_favs)
-
+```{r}
+most_favs
 ```
 
 We will also create a table to see the tweets that are shared the most.
 
-```{r}
+```{r, include = FALSE}
 most_retweets <-
 tweets %>%
   dplyr::select(screen_name, text, favorite_count, retweet_count, reply_count, quote_count) %>%
   filter(retweet_count >= 5) %>%
   arrange(desc(retweet_count))
+```
 
-formattable(most_retweets)
-
+```{r, warning= FALSE}
+most_retweets
 ```
 
 # User Results
 
 Now exploring the user data
 ```{r, include = FALSE, echo = FALSE}
-#loc_users <-
-#users %>%
-  #group_by(location) %>%
-  #tally() %>%
-  #filter(n >= 2) %>%
-  #tidyr::drop_na() %>%
-  #arrange(desc(n))
+loc_users <-
+users %>%
+  group_by(city) %>%
+  tally() %>%
+  filter(n >= 2) %>%
+  tidyr::drop_na() %>%
+  arrange(desc(n))
 
-#loc_users
+loc_users
 ```
 
-
-Many of these accounts represent organizations and activists groups. I'm filtering by status count, which means the users who post the most tweets will be listed first.
-
-```{r, include = FALSE}
-
-#users %>%
-  #select(screen_name, name, description, statuses_count, followers_count) %>%
-  #group_by(screen_name) %>%
-  #filter(statuses_count >= 5) %>%
-  #arrange(desc(followers_count))
-
-```
 
 #  Voting Results
 
+```{r, include = FALSE}
+target <- c("State Measures Initiative Measure No. 1631 Initiative Measure No. 1631 concerns pollution.")
+
+target2 <- c("Washington State Initiative Measure No. 1631 Initiative Measure No. 1631 concerns pollution.")
+
+votes <-
+  votes %>%
+  select(County, Race, Candidate, Votes, PercentageOfTotalVotes) %>%
+  filter(Race %in% c(target, target2)) %>%
+  mutate(subregion= tolower(County))
+
+```
+
 Twitter has a strong level of support for Initiative 1631, but the voting results are very different. Below is a chart that displays the overall sum of votes for Yes and No.
 ```{r, include = FALSE}
-#votes <-
-  #votes %>%
-  #dplyr::select(County, Race, Candidate, Votes, PercentageOfTotalVotes) %>%
-  #filter(Race %in% c(target, target2)) %>%
-  #mutate(subregion= tolower(County))
 
 sum_votes <- 
 votes %>%
-  group_by(Candidate) %>%
+  group_by(Candidate, Race) %>%
   mutate(Total_votes = sum(Votes)) 
 
+vote_count <-
 ggplot(data = sum_votes, aes(x= Candidate, y = Total_votes))+
   geom_bar(stat = "identity",  position=position_dodge(), fill = "darkgreen") +
     geom_text(
@@ -486,12 +542,16 @@ ggplot(data = sum_votes, aes(x= Candidate, y = Total_votes))+
   xlab("") +
   ylab("Total Votes") +
   theme_classic()
+```
+
+```{r, warning= FALSE}
+vote_count
 
 ```
 
 When we look at the results by county, we see that there is significant opposition to the measure in almost every county in the state.
 
-```{r}
+```{r, include = TRUE}
 #option 
 ggplot(votes, aes(County, Votes)) +
 geom_bar(stat = "identity", aes(fill = Candidate)) + coord_flip()
@@ -499,19 +559,10 @@ geom_bar(stat = "identity", aes(fill = Candidate)) + coord_flip()
 ```
 
 ## Mapping
-We want to map the voting results to see how it differs from the tweets.
 
-```{r}
-target <- c("State Measures Initiative Measure No. 1631 Initiative Measure No. 1631 concerns pollution.")
+We pull a map of Washington state and the coordinates for the country boundaries from the maps package. 
 
-target2 <- c("Washington State Initiative Measure No. 1631 Initiative Measure No. 1631 concerns pollution.")
-
-
-```
-
-Then we need to get a map of Washington state.
-
-```{r, include=FALSE}
+```{r, include = FALSE, warning= FALSE}
 
 #i use the ggmap package for this map
 state = c(left = -124.84, bottom = 45.54,right = -116.92, top = 49.0)
@@ -528,42 +579,26 @@ county %>%
 map2 +
   geom_path(data = wash_counties, mapping =aes(x= long, y= lat, group = group))
 
-```
-
-```{r,include=FALSE}
-county<- map_data("county")
-
-wash_counties <-
-county %>%
-  filter(region == "washington") 
-
-#cleaning the full location data set 
-
-full_location <-
-  full_location %>%
-  mutate(county = tolower(trimws(.$county, "l"))) 
-
-
-#renaming column before merging
-colnames(full_location)[4] <- "subregion"
-
-location_merge <- right_join(full_location, wash_counties, by = "subregion")
-
-location_merge<- location_merge[!duplicated(location_merge$user_id), ]
-
-
-map2 +
-  geom_count(data = location_merge, mapping =aes(x= long, y= lat, group = city))
-
-```
-
-
-```{r,include=FALSE}
 w <- ggplot(data = wash_counties, mapping =aes(x= long, y= lat, group = group))
-vote_loc <- right_join(wash_counties, votes, by = "subregion")
+
+
 ```
 
-Then I filter the data so that we can visualize the percentage of voters who voted Yes on 1631.
+Next we need to clean the voting data and combine it with the county data so we can map it.
+
+```{r, inlude = TRUE, warning = FALSE}
+votes <-
+  votes %>%
+  select(County, Race, Candidate, Votes, PercentageOfTotalVotes) %>%
+  filter(Race %in% c(target, target2)) %>%
+  mutate(subregion= tolower(County))
+
+vote_loc <- right_join(wash_counties, votes, by = "subregion")
+
+
+```
+
+Then I filter the data so that we can visualize the percentage of voters who voted Yes on 1631 and map the results by county. This displays where people voted for Initiative 1631.
 
 ```{r, include=FALSE, echo = FALSE, warning=FALSE}
 yes_votes <-
@@ -572,15 +607,18 @@ yes_votes <-
   mutate(PercentageOfTotalVotes = as.numeric(.$PercentageOfTotalVotes)) %>%
   mutate(Votes = as.numeric(.$Votes))
 
+
 results <-  w +
   geom_polygon(data = yes_votes, aes(x= long, y= lat, fill = PercentageOfTotalVotes)) +
   ggtitle("% Voters who Voted Yes on 1631")
 
+```
 
+```{r}
 results
 ```
 
-We can also see where the many "No" Voters are
+We can also see where the many "No" Voters are located; there are many  No voters.
 
 
 ```{r, include=FALSE, echo = FALSE, warning=FALSE}
@@ -593,22 +631,17 @@ no_votes <-
 no_results <-  w +
   geom_polygon(data = no_votes, aes(x= long, y= lat, fill = PercentageOfTotalVotes)) +     ggtitle("% Voters who Voted No on 1631")
 
+```
+
+```{r, warning = FALSE}
 no_results
 
 ```
 
-trying to geocode the tweets
-
-```{r,include=FALSE}
-#users
-
-
-```
-
-
 ## Discussion
 
-Based on these findings, it appears that Initiative 1631 enjoyed far greater support among Twitter users than the voting population. However, the Twitter population is not a reprensentative sample of the voting population. Further, many of the supporters on Twitter represented activist groups who used it to advertise or drum up support for the carbon tax. Twitter also overrepresented urban and out-of-state residents, and voters in rural and even suburban areas are not well-represented on Twitter.
+Based on these findings, it appears that Initiative 1631 enjoyed far greater support among Twitter users than the voting population. However, the Twitter population is not a representative sample of the voting population. Further, many of the supporters on Twitter represented activist groups who used it to advertise or drum up support for the carbon tax. Twitter also over-represented urban and out-of-state residents, and voters in rural and even suburban areas are not well-represented on Twitter.
 
 
 ## References
+
