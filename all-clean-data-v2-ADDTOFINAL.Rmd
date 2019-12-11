@@ -1,0 +1,260 @@
+---
+title: "all-clean-data-v2"
+author: "Abigail Kamp"
+date: "December 5, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+#first make sure all packages and files are loaded from all-clean-data
+#need to add the datatables package
+
+install.packages("DT")
+install.packages("datatable")
+install.packages("formattable")
+install.packages("virdis")
+
+library(dplyr)
+library(formattable)
+```
+
+Creating a table that shows the most popular tweets (most likes)
+
+```{r}
+
+most_favs <- 
+tweets %>%
+  select(screen_name, text, favorite_count, retweet_count, reply_count, quote_count) %>%
+  filter(favorite_count >= 5) %>%
+  arrange(desc(favorite_count))
+
+formattable(most_favs)
+
+```
+
+```{r}
+most_retweets <-
+tweets %>%
+  select(screen_name, text, favorite_count, retweet_count, reply_count, quote_count) %>%
+  filter(retweet_count >= 5) %>%
+  arrange(desc(retweet_count))
+
+formattable(most_retweets)
+
+
+```
+
+Providing an overall sum of votes for Yes and No.
+```{r}
+
+sum_votes <- 
+votes %>%
+  group_by(Candidate) %>%
+  mutate(Total_votes = sum(Votes)) 
+
+ggplot(data = sum_votes, aes(x= Candidate, y = Total_votes))+
+  geom_bar(stat = "identity",  position=position_dodge(), fill = "darkgreen") +
+    geom_text(
+    aes(label = Total_votes),
+    position = position_dodge(1),
+    vjust = 0) +
+  ggtitle("Initiative 1631 Voting Results") +
+  xlab("") +
+  ylab("Total Votes") +
+  theme_classic()
+
+```
+
+Trying a pie chart
+```{r}
+
+ggplot(data = sum_votes, aes(x= "", y = Total_votes, fill = Candidate))+
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y", start = 0)
+
+
+bp<- ggplot(df, aes(x="", y=value, fill=group))+
+geom_bar(width = 1, stat = "identity")
+bp
+```
+
+
+Now exploring the user data
+```{r}
+loc_users <-
+users %>%
+  group_by(location) %>%
+  tally() %>%
+  filter(n >= 2) %>%
+  tidyr::drop_na() %>%
+  arrange(desc(n))
+
+loc_users
+
+```
+
+Many of these accounts represent organizations and activists groups. I'm filtering by status count, which means the users who post the most tweets will be listed first.
+```{r}
+
+users %>%
+  select(screen_name, name, description, statuses_count, followers_count) %>%
+  group_by(screen_name) %>%
+  filter(statuses_count >= 5) %>%
+  arrange(desc(followers_count))
+
+```
+
+
+
+All location data in TWitter is input by the user, so it lacks uniformity and is difficult to work with. However, we start by trying to isolate the city from the user location data. Of note, this information is entered by the user and may be not accurate, but there is no way to verify location. 
+
+To match the Twitter-user entered city, we need to match that with the relevant county information. We obtained a list of Washington cities and their respective counties from the Washington Court System Website (https://www.courts.wa.gov/court_dir/?fa=court_dir.countycityref). The Washington Court system lists each city and their county in alphahabetically order, and we created a CSV from this information. 
+
+```{r, include = FALSE}
+#begin cleaning the user data by dropping the NAs and separating into city and state where possible
+users <-
+  users %>%
+   select(user_id, location, screen_name) %>%
+   drop_na(.)
+
+users <- separate(users, location, into = c("city","state"), sep= (","))
+
+#need to get rid of the white space
+users <-
+users %>%
+  select(user_id, screen_name, city) %>%
+  mutate(city = tolower(trimws(.$city)))
+```
+Here we merge the cities file with the user file. 
+
+```{r, include= FALSE}
+#uploading list of cities in washington to match with user information
+#cities <- read_csv("washington-cities.csv")
+
+#renaming to match with other
+colnames(cities)[1] <- "city"
+colnames(cities)[2] <- "county"
+
+#cleaning city data
+cities <-
+cities %>%
+  mutate(city = tolower(trimws(.$city, "l")))
+
+cities$city <- (gsub("\\s", "", cities$city))
+
+str(users$city)
+str(cities$city)
+
+#comparing the locations dataframe
+full_location <- merge(users, cities, by = "city")
+
+#reordering city variables
+full_location <-
+full_location %>%
+  select(user_id, screen_name, city, county)
+
+#annoyingly full_location has an extra x in the user ID so need to remove
+full_location$user_id <- gsub("x", "", full_location$user_id)
+tweets$user_id <- gsub("x", "", tweets$user_id)
+
+#merge user location with actual tweets
+tweets_location <-
+  full_location %>% semi_join(tweets, by = "user_id")
+```
+
+Then we need to get a map of Washington state.
+
+```{r, include = FALSE}
+
+#i use the ggmap package for this map
+state = c(left = -124.84, bottom = 45.54,right = -116.92, top = 49.0)
+
+map2 <- get_stamenmap(state, zoom = 7, maptype = "toner-lite") %>% ggmap()
+map2
+
+#this map information is pulled from ggmap's map package
+county<- map_data("county")
+
+wash_counties <-
+county %>%
+  filter(region == "washington") 
+
+#can we map these counties on top of our washington state map?
+map2+
+  geom_path(aes(x= long, y= lat, group = group), data = wash_counties)
+
+w <- ggplot(data = wash_counties, mapping =aes(x= long, y= lat, group = group))
+#now we are merging the county data with the voting results into one file
+vote_loc <- right_join(wash_counties, votes, by = "subregion")
+
+head(vote_loc)
+
+
+```
+
+
+Now I attempt to map the tweets as points on a map. First I need to do some data cleaning.
+```{r}
+
+#need to combine the tweets file with the washington counties file
+#first I change the column name in the tweets file
+colnames(tweets_location)[4]<- "subregion"
+
+#cleaning again
+tweets_location <-
+tweets_location %>%
+  mutate(subregion = tolower(trimws(.$city, "l")))
+
+#maybe the problem is the washington counties data
+wash_counties <-
+  wash_counties %>%
+  mutate(subregion = tolower(trimws(.$subregion, "l")))
+
+#now cleaning city file
+#renaming to merge cities with tweets
+colnames(washington_cities)[1]<- "city"
+
+washington_cities <-
+  washington_cities %>%
+  mutate(city = tolower(trimws(.$city, "l")))
+
+washington_cities$city <- (gsub("\\s", "", washington_cities$city))
+
+#lets and try merge cities and county
+city_tweets <- left_join(tweets_location, washington_cities, by = "city")
+
+#need to remove some white space
+tweets_location$subregion <- (gsub("\\s", "", tweets_location$subregion))
+
+tweets_location2 <- merge(city_tweets, washington_cities, by = "subregion")
+
+tweets_location2$subregion <- NULL
+
+str(wash_counties$subregion)
+str(tweets_location$subregion)
+
+
+```
+
+Then we try and map!
+
+```{r}
+map2 +
+  geom_path(aes(x= long, y= lat, group = group), data = wash_counties) +
+  geom_point(data = tweets_location2, aes(x= long, y = lat, group = user_id), color = "green")
+
+```
+
+
+
+```{r}
+
+
+```
+
+
+
+```{r}
+
+
+```
