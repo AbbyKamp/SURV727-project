@@ -118,6 +118,18 @@ save_as_csv(all_tweets,"tweets.csv",prepend_ids = TRUE, na = "",fileEncoding = "
 
 ```
 
+We do not want to keep running the Twitter search_fullarchive function because it will eventually charge us money to pull more data, so we saved the data in CSV file. Then we removed duplicate tweets. There were about 400 duplicate tweets in the file.
+
+```{r, include = FALSE}
+# to avoid running the code again, we uploaded the Tweets file as CSV
+#setwd()
+
+tweets <- read_csv("Data-cleaning/final-paper/data/tweets.csv")
+
+#removing duplicates
+tweets <- tweets[!duplicated(tweets$status_id), ]
+```
+
 We also obtained the user data that was associated with the Twitter accounts in the file above. The "users_data" function in rtweet pulls information about the individual users which we stored in a new file.
 
 ```{r, include = FALSE}
@@ -129,23 +141,68 @@ setwd("~/Data-cleaning/final-paper/data")
 users <- read_csv("twitter-users.csv")
 ```
 
+All location data in TWitter is input by the user, so it lacks uniformity and is difficult to work with. However, we start by trying to isolate the city from the user location data. Of note, this information is entered by the user and may be not accurate, but there is no way to verify location. 
+
+To match the Twitter-user entered city, we need to match that with the relevant county information. We obtained a list of Washington cities and their respective counties from the Washington Court System Website (https://www.courts.wa.gov/court_dir/?fa=court_dir.countycityref). The Washington Court system lists each city and their county in alphahabetically order, and we created a CSV from this information. 
+
+```{r, include = FALSE}
+#begin cleaning the user data by dropping the NAs and separating into city and state where possible
+users <-
+  users %>%
+   select(user_id, location, screen_name) %>%
+   drop_na(.)
+
+users <- separate(users, location, into = c("city","state"), sep= (","))
+
+#need to get rid of the white space
+users <-
+users %>%
+  select(user_id, screen_name, city) %>%
+  mutate(city = tolower(trimws(.$city)))
+```
+Here we merge the cities file with the user file. 
+
+```{r, include= FALSE}
+#uploading list of cities in washington to match with user information
+#cities <- read_csv("washington-cities.csv")
+
+#renaming to match with other
+colnames(cities)[1] <- "city"
+colnames(cities)[2] <- "county"
+
+#cleaning city data
+cities <-
+cities %>%
+  mutate(city = tolower(trimws(.$city, "l")))
+
+cities$city <- (gsub("\\s", "", cities$city))
+
+str(users$city)
+str(cities$city)
+
+#comparing the locations dataframe
+full_location <- merge(users, cities, by = "city")
+
+#reordering city variables
+full_location <-
+full_location %>%
+  select(user_id, screen_name, city, county)
+
+#annoyingly full_location has an extra x in the user ID so need to remove
+full_location$user_id <- gsub("x", "", full_location$user_id)
+tweets$user_id <- gsub("x", "", tweets$user_id)
+
+#merge user location with actual tweets
+tweets_location <-
+  full_location %>% semi_join(tweets, by = "user_id")
+
+```
+
 To obtain the voting results, we went to the Washington Secretary of State webpage and downloaded the "All Counties" file to obtain the results of each election broken down by county. (source: https://results.vote.wa.gov/results/20181106/Export.html) 
 
 ```{r, include = FALSE}
 # download the file to your working directly and upload it as a CSV
 votes <- read_csv("~/Data-cleaning/final-paper/data/washington-2018-results.csv")
-```
-
-We do not want to keep running the Twitter search_fullarchive function because it will eventually charge us money to pull more data, so we saved the data in CSV file. Then we removed duplicate tweets. There were about 400 duplicate tweets in the file.
-
-```{r, include = FALSE}
-# to avoid running the code again, we uploaded the Tweets file as CSV
-#setwd()
-
-tweets <- read_csv("Data-cleaning/final-paper/data/tweets.csv")
-
-#removing duplicates
-tweets <- tweets[!duplicated(tweets$status_id), ]
 ```
 
 
