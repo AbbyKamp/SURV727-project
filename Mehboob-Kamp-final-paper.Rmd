@@ -519,7 +519,7 @@ Then we need to get a map of Washington state.
 ```{r}
 
 #i use the ggmap package for this map
-#state = c(left = -124.84, bottom = 45.54,right = -116.92, top = 49.0)
+state = c(left = -124.84, bottom = 45.54,right = -116.92, top = 49.0)
 
 map2 <- get_stamenmap(state, zoom = 7, maptype = "toner-lite") %>% ggmap()
 
@@ -529,6 +529,9 @@ county<- map_data("county")
 wash_counties <-
 county %>%
   filter(region == "washington") 
+
+map2 +
+  geom_path(data = wash_counties, mapping =aes(x= long, y= lat, group = group))
 
 ```
 
