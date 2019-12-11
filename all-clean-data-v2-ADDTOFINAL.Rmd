@@ -18,6 +18,49 @@ library(dplyr)
 library(formattable)
 ```
 
+## Trying to do a final pull
+We are doing one more pull to determine we get a natural sample of tweets, so we pull an extra 500 tweets that just mention Initiatie 1631 to ensure that we have a more representative sample. This pull results in 490 tweets.
+
+```{r}
+neutral_check <- search_fullarchive("#initiative1631 OR (initiative 1631)", 
+                                    n = 500, env_name = "SURV727", 
+                                    fromDate ="201810090000",  toDate = "201811062359")
+
+save_as_csv(neutral_check,"final-check-tweets.csv",prepend_ids = TRUE, na = "",fileEncoding = "UTF-8")
+
+```
+
+
+I saw that Tweet set as as CSV and combine it with the original file to see how many duplicates there are.  When we combine into the all_tweets object, we have 2176 observations.
+
+```{r}
+all_tweets <- rbind(tweets, neutral_check)
+
+save_as_csv(all_tweets,"all_tweets.csv",prepend_ids = TRUE, na = "",fileEncoding = "UTF-8")
+
+```
+
+Then I am checking for duplicates and seeing how many are removed. We check by status_id because it is unique to each tweet.
+
+```{r}
+all_tweets <- all_tweets[!duplicated(all_tweets$status_id), ]
+
+```
+
+Trying to get the latitude and longitude of my new data. This function from rtweet pulls all available latitude and longitude information for each tweet. However, this pull only results in two tweets with location information. This is because Twitter users need to allow Twitter to pull their geolocation and the vast majority of users opt out. 
+```{r}
+new_location <- lat_lng(neutral_check)
+
+```
+
+
+
+```{r}
+
+
+```
+
+
 Creating a table that shows the most popular tweets (most likes)
 
 ```{r}
@@ -97,7 +140,7 @@ Many of these accounts represent organizations and activists groups. I'm filteri
 ```{r}
 
 users %>%
-  select(screen_name, name, description, statuses_count, followers_count) %>%
+  select(screen_name, description, statuses_count, followers_count) %>%
   group_by(screen_name) %>%
   filter(statuses_count >= 5) %>%
   arrange(desc(followers_count))
@@ -113,8 +156,8 @@ To match the Twitter-user entered city, we need to match that with the relevant 
 ```{r, include = FALSE}
 #begin cleaning the user data by dropping the NAs and separating into city and state where possible
 users <-
-  dplyr::users %>%
-   select(user_id, location, screen_name) %>%
+   users %>%
+   dplyr::select(user_id, location, screen_name) %>%
    drop_na(.)
 
 users <- separate(users, location, into = c("city","state"), sep= (","))
@@ -129,7 +172,7 @@ Here we merge the cities file with the user file.
 
 ```{r, include= FALSE}
 #uploading list of cities in washington to match with user information
-#cities <- read_csv("washington-cities.csv")
+cities <- read_csv("washington-cities.csv")
 
 #renaming to match with other
 colnames(cities)[1] <- "city"
@@ -240,15 +283,17 @@ Then we try and map!
 
 ```{r}
 Location_data <- location_merge %>%
-  dplyr::select(user_id, screen_name, city, subregion, long, lat) %>%
-  group_by(city)  
+  select(user_id, screen_name, city, subregion, long, lat) %>%
+  group_by(city) %>%
+  mutate(count = n()) 
 
-Location_data 
+Location_data %>%
+  arrange(desc(count))
   
 map2 +
-  geom_point(data = Location_data, aes(x = long, y = lat, group =city, size=n))  +
+  geom_path(data = wash_counties, mapping =aes(x= long, y= lat, group = group)) +
+  geom_point(data = Location_data, aes(x = long, y = lat, group =city, size=count))  +
   labs(title = "Tweet Locations")
-
 
 ```
 
@@ -266,8 +311,8 @@ county %>%
 #cleaning the full location data set 
 
 full_location <-
-  #full_location %>%
-  #mutate(county = tolower(trimws(.$county, "l"))) 
+  full_location %>%
+  mutate(county = tolower(trimws(.$county, "l"))) 
 
 
 #renaming column before merging
@@ -277,9 +322,9 @@ location_merge <- right_join(full_location, wash_counties, by = "subregion")
 
 location_merge<- location_merge[!duplicated(location_merge$user_id), ]
 
-w <- ggplot(data = location_merge, mapping =aes(x= long, y= lat, group = group))
+#w <- ggplot(data = location_merge, mapping =aes(x= long, y= lat, group = group))
 #now we are merging the county data with the voting results into one file
-vote_loc <- right_join(wash_counties, votes, by = "subregion")
+#vote_loc <- right_join(wash_counties, votes, by = "subregion")
 
 ```
 
@@ -287,5 +332,9 @@ Now mapping the tweets
 
 ```{r}
 
+
+ggmap(get_map(location = 'Washington', zoom =7))
+
+?register_google
 
 ```
