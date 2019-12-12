@@ -1,0 +1,572 @@
+---
+title: "Fundamentals of Computing and Data Display"
+subtitle: "Term paper template"
+author: "Abigail Kamp and Rameesha Mehboob"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: yes
+    df_print: kable
+references:
+- id: Wickham2014
+  title: Tidy Data
+  author:
+  - family: Wickham
+    given: Hadley
+  container-title: Journal of Statistical Software
+  volume: 59
+  issue: 10
+  page: 1-23
+  type: article-journal
+  issued:
+    year: 2014
+- id: Baumer2017
+  title: Modern Data Science with R
+  author:
+  - family: Baumer
+    given: Benjamin S.
+  - family: Kaplan
+    given: Daniel T.
+  - family: Horton
+    given: Nicholas J.
+  type: book
+  publisher: Chapman \& Hall/CRC Press.
+  issued:
+    year: 2017
+---
+
+```{r, include = FALSE}
+#setting our working directory
+setwd("~/Documents/GitHub/SURV727-project")
+```
+
+```{r, include = FALSE}
+#First we load in our packages
+library(knitr)
+library(tidyverse)
+library(rtweet)
+library(dplyr)
+library(readr)
+library(rjson)
+library(ggmap)
+library(maps)
+library(ggvis)
+library(ggplot2)
+library(kableExtra)
+```
+
+## Introduction
+
+In 2018, Washington States had a carbon tax referendum on the ballot. It asked voters:
+
+"This measure would charge pollution fees on sources of greenhouse gas pollutants and use the revenue to reduce pollution, promote clean energy, and address climate impacts, under oversight of a public board.
+
+Should this measure be enacted into law?""
+
+Initiative 1631 would have enacted a fee a $15 per ton of carbon emitted in 2020 and raised $2 per year until 2035. The revenue would have been invested in "clean air and energy", "clean water and health forests", and "healthy communities". Initiative 1631 was supported by a variety of climate groups, and there was was a broad coalition supporting the measure. Washington State has a reputation for climate-friendly, left-leaning politics, which gave supporters hope that the referendum, would pass. (Source:  https://www.vox.com/energy-and-environment/2018/9/28/17899804/washington-1631-results-carbon-fee-green-new-deal)
+
+We use Initiative 1631 as a case study to compare the online support for a ballot initiative with actual voting results.
+
+## Data
+
+To study online media support, we analyzed Twitter data. To access historical Tweets, we applied and obtained Twitter Enterprise accounts, which provide access the entire Twitter archive. (For future researchers, each account is allowed free access to 5,000 Tweets. Once the limit is reached, Twitter will charge for further access.)
+
+Our Tweet sample consisted of 2,176 tweets collected between October 01, 2018 and November 6, 2018. We narrowed our search by the following hashtags:
+
+1. "YesOn1631 OR Yesto1631"
+2. "#NoOn1631 OR #Noto1631"
+3. "#initiative1631 OR (initiative 1631)"
+
+We pulled 1,200 neutral tweets that just had the initiative1631 hashtag. We attempted to pull 700 positive tweets ("YesOn1631 OR Yesto1631") and 700 negative tweets ("#NoOn1631 OR #Noto1631"). However, we were not able to obtain the full 700 positive or negative tweets. Our pulls included many duplicates, which were deleted from the dataset.
+
+We did not restrict our sample by location. Location data is problematic on Twitter, because it is voluntarily entered by the user. There is no standard form, so many people leave the location blank. Others put in a "joke" location, such as "Planet Earth") or leave it overly broad (such as entering "USA").  We did work with the users who entered their location as somewhere in Washington state, but the sample size of users with potentially accurate location data was very small.  
+
+We did attempt to find geo_locations for each tweet. The Rtweet package has the lat_lng function, which provides as geolocation per tweet. However, users must chose to disclose their geolocation, and the vast majority of users do not disclose their location. Therefore, this pull only resulted in two tweets with location information.
+
+For the purpose of reproducibility, if you enter your Enterprise Twitter information into the create_token object, you will pull a sample of Tweets. However, we do not  include our token information  because it will eventually charge us money to pull more data. To continue running the analysis, we saved the tweet information to CSV files and loaded it onto R.
+
+```{r, include = FALSE, eval = FALSE}
+# Abby's Twitter API token. API information removed for security purposes
+create_token(
+  app = "SURV727",
+  consumer_key = "",
+  consumer_secret = "",
+  access_token = "",
+  access_secret = " ")
+
+#get the token
+get_token()
+```
+
+``` {r, include = FALSE, eval = FALSE}
+#Actually pulling the Tweets
+
+##PULLING YES TWEETS##
+yes_week1 <- search_fullarchive("YesOn1631 OR Yesto1631", n = 100, env_name = "SURV727",
+                                fromDate ="201810090000",toDate = "201810152359")
+
+yes_week2 <- search_fullarchive("YesOn1631 OR Yesto1631", n = 100, env_name = "SURV727",
+                                fromDate ="201810160000",toDate = "201810222359")
+
+yes_week3 <- search_fullarchive("YesOn1631 OR Yesto1631", n = 250, env_name = "SURV727",
+                                fromDate ="201810230000",toDate = "201810292359")
+
+yes_week4 <- search_fullarchive("YesOn1631 OR Yesto1631", n = 250, env_name = "SURV727",
+                                fromDate ="201810300000",toDate = "201811062359")
+
+#merging the four yes objects and saving to one file
+yes_4_weeks <- do.call("rbind", list(yes_week1, yes_week2, yes_week3, yes_week4))
+
+##Pulling NEUTRAL Tweet"
+neutral_week1 <- search_fullarchive("#initiative1631 OR (initiative 1631)", 
+                                    n = 100, env_name = "SURV727", 
+                                    fromDate ="201810090000",  toDate = "201810152359")
+
+neutral_week2 <- search_fullarchive( "#initiative1631 OR (initiative 1631)", 
+                                     n = 100, env_name = "SURV727",
+                                     fromDate="201810160000", toDate = "201810222359")
+
+neutral_week3 <- search_fullarchive("#NoOn1631 OR #Noto1631", 
+                                    n = 250, env_name = "SURV727", 
+                                    fromDate ="201810230000",toDate = "201810292359")
+
+neutral_week4 <- search_fullarchive("#initiative1631 OR (initiative 1631)",
+                                    n = 250, env_name = "SURV727", 
+                                    fromDate ="201810300000",toDate = "201811062359")
+
+#merging the neutral weeks
+netural_4_weeks <- do.call("rbind", list(neutral_week1, neutral_week2, neutral_week3, neutral_week4))
+
+#Pulling the Negative Tweets#
+no_week1 <- search_fullarchive("#NoOn1631 OR #Noto1631", n = 100, env_name = "Dev2",
+                                fromDate ="201810090000",toDate = "201810152359")
+
+no_week2 <- search_fullarchive("NoOn1631 OR Noto1631", n = 100, env_name = "Dev2",
+                                fromDate ="201810160000",toDate = "201810222359")
+
+no_week3 <- search_fullarchive("NoOn1631 OR Noto1631", n = 250, env_name = "Dev2",
+                                fromDate ="201810230000",toDate = "201810292359")
+
+no_week4 <- search_fullarchive("NoOn1631 OR Noto1631", n = 250, env_name = "Dev2",
+                                fromDate ="201810300000",toDate = "201811062359")
+
+#merging the four no objects and saving to one file
+no_4_weeks <- do.call("rbind", list(no_week1, no_week2, no_week3, no_week4))
+
+#merging all tweets
+all_tweets <- do.call("rbind", list(yes_4_weeks, netural_4_weeks, no_4_weeks))
+
+#we then saved it as a CSV
+save_as_csv(all_tweets,"tweets.csv",prepend_ids = TRUE, na = "",fileEncoding = "UTF-8")
+
+```
+
+```{r, include = FALSE, eval = FALSE}
+neutral_check <- search_fullarchive("#initiative1631 OR (initiative 1631)", 
+                                    n = 500, env_name = "SURV727", 
+                                    fromDate ="201810090000",  toDate = "201811062359")
+
+save_as_csv(neutral_check,"final-check-tweets.csv",prepend_ids = TRUE, na = "",fileEncoding = "UTF-8")
+
+```
+
+```{r, include = FALSE, eval = FALSE}
+all_tweets <- rbind(tweets, neutral_check)
+
+save_as_csv(all_tweets,"all_tweets.csv",prepend_ids = TRUE, na = "",fileEncoding = "UTF-8")
+
+```
+
+```{r, include = FALSE, eval = FALSE}
+all_tweets <- all_tweets[!duplicated(all_tweets$status_id), ]
+
+```
+
+```{r, include = FALSE, eval = FALSE}
+new_location <- lat_lng(neutral_check)
+
+```
+
+```{r, include = FALSE}
+# to avoid running the code again, we uploaded the Tweets file as CSV
+#setwd()
+
+tweets <- read_csv("all_tweets.csv")
+
+#removing duplicates
+tweets <- tweets[!duplicated(tweets$status_id), ]
+```
+
+We also obtained the user data that was associated with the Twitter accounts in the file above. The "users_data" function in rtweet pulls information about the individual users, which we also stored in a new file.
+
+```{r, include = FALSE, results = "hide", message= FALSE}
+users <- read_csv("twitter-users.csv")
+```
+
+To work with the data we had, we manipulated the user-entered location data and merged it with a list of Washington cities and their respective counties. We obtained this list from the Washington Court system Website.((https://www.courts.wa.gov/court_dir/?fa=court_dir.countycityref).
+
+We obtained the voting results from Washington Secretary of State webpage. We downloaded the "All Counties" file to obtain the results of each election broken down by county. (source: https://results.vote.wa.gov/results/20181106/Export.html) 
+
+
+```{r, include = FALSE}
+#begin cleaning the user data by dropping the NAs and separating into city and state where possible
+users <-
+  users %>%
+   dplyr::select(user_id, location, screen_name) %>%
+   drop_na(.)
+
+users <- separate(users, location, into = c("city","state"), sep= (","))
+
+#need to get rid of the white space and creating a new file to do this
+users2 <-
+users %>%
+  dplyr::select(user_id, screen_name, city) %>%
+  mutate(city = tolower(trimws(.$city)))
+```
+
+```{r, include= FALSE}
+#uploading list of cities in washington to match with user information
+cities <- read_csv("washington-cities.csv")
+
+#renaming to match with other
+colnames(cities)[1] <- "city"
+colnames(cities)[2] <- "county"
+
+#cleaning city data
+cities <-
+cities %>%
+  mutate(city = tolower(trimws(.$city, "l")))
+
+cities$city <- (gsub("\\s", "", cities$city))
+
+str(users$city)
+str(cities$city)
+
+#comparing the locations dataframe
+full_location <- merge(users2, cities, by = "city")
+
+#reordering city variables
+full_location <-
+full_location %>%
+  dplyr::select(user_id, screen_name, city, county)
+
+#annoyingly full_location has an extra x in the user ID so need to remove
+full_location$user_id <- gsub("x", "", full_location$user_id)
+tweets$user_id <- gsub("x", "", tweets$user_id)
+
+#merge user location with actual tweets
+tweets_location <-
+  full_location %>% semi_join(tweets, by = "user_id")
+
+```
+
+```{r, include = FALSE}
+# download the file to your working directly and upload it as a CSV
+votes <- read_csv("washington-2018-results.csv")
+```
+
+## Results
+
+Overall, online support for Initiative 1631 was quite strong.
+
+# Results
+
+## Tweet Results
+
+We start by looking at the tweets themselves. First, we sort and filter the tweets based on the favorite count. In the table below, we see that the most Favorited tweets contain positive messages about the Initiative. 
+
+```{r, include = FALSE}
+most_favs <- 
+tweets %>%
+  dplyr::select(screen_name, text, favorite_count) %>%
+  filter(favorite_count >= 5) %>%
+  arrange(desc(favorite_count))
+
+favorite <-(head(most_favs))
+```
+
+```{r}
+kable(favorite, "latex") %>%
+  column_spec(2, width = "15em")
+```
+
+The most-shared tweets also express support for carbon tax. However, the most shared tweet states that the New York Times endorsed Initiative 1631. While this is an important tweet, it signals out-of-state support rather than domestic, Washington support. 
+
+```{r, include = FALSE}
+most_retweets <-
+tweets %>%
+  dplyr::select(screen_name, text, retweet_count) %>%
+  filter(retweet_count >= 5) %>%
+  arrange(desc(retweet_count))
+
+most_retweets <- head(most_retweets)
+```
+
+```{r}
+kable(most_retweets, "latex")%>%
+  column_spec(2, width = "15em")
+```
+
+We created a graph that showed the hashtags used in the most popular tweets as measured by reply count and favorite count.  The most-Favorited hashtag was "yeson1631" with 591 favorites, followed by "election day" with 152.  For reply_count, "noon1631" had the most replies at 16, with "yeson1631" close behind with 13 replies. 
+
+```{r, warning = FALSE, include = FALSE}
+popular_tweets <- 
+  tweets %>%
+  dplyr::select(hashtags, reply_count, favorite_count, text) %>%
+  drop_na(hashtags) %>%
+  mutate(hashtags = tolower(hashtags)) %>%
+  separate(., hashtags, into = c("hashtag1", "hashtag2", "hashtag3"),
+           sep = " ")%>%
+  group_by(hashtag1) %>%
+  summarize_if(is.numeric, sum, na.rm=TRUE)
+
+#graphing popular tweets
+popular_tweet_graph <-
+popular_tweets %>%
+  filter(favorite_count >= 10) %>%
+ggplot(., aes(x = reply_count, y = favorite_count,  color = hashtag1)) +
+  geom_point(size = 3)+
+  xlab(label = "Reply Count")+
+  ylab(label= "Favorite Count") +
+  ggtitle("Most Popular Hashtags by Replies and Favorites")
+
+```
+
+```{r}
+popular_tweet_graph
+
+```
+
+```{r, warning = FALSE, include = FALSE}
+user_support <- 
+  tweets %>%
+  dplyr::select(hashtags, reply_count, favorite_count,text,screen_name) %>%
+  drop_na(hashtags) %>%
+  mutate(hashtags = tolower(hashtags)) %>%
+  separate(., hashtags, into = c("hashtag1", "hashtag2", "hashtag3"),
+           sep = " ")%>%
+  filter(hashtag1=="yeson1631"|hashtag1=="noon1631")%>%
+  group_by(screen_name) %>%
+  count(hashtag1)
+
+#user support graph
+user_support_graph <-
+  user_support %>%
+  filter(n>2) %>%
+  ggplot(., aes(x =n, y= screen_name))+
+  geom_point(col = "red3", size=3)+
+  xlab(label = "Number of Tweets by Twitter User") +
+  ylab(label = "Screen Name")+
+  ggtitle("Evaluating Twitter Support By Screen Names")
+
+
+```
+
+When evaluating the users who posted about this topic, many of the user accounts appeared to be activist accounts. For example, the graph below shows that several active screen names are: "yeson1631", "WA47Dems", "VoteNOon1631". and "MomsAction". 
+
+```{r}
+user_support_graph
+```
+
+```{r, warning = FALSE, include = FALSE}
+hashes <-
+  tweets %>%
+  dplyr::select(hashtags, reply_count, favorite_count, text) %>%
+  tidyr::drop_na(hashtags) %>%
+  mutate(hashtags = tolower(hashtags)) %>%
+  tidyr::separate(., hashtags, into = c("hashtag1", "hashtag2", "hashtag3"),
+           sep = " ") %>%
+  group_by(hashtag1) %>%
+  count(hashtag1) %>%
+  arrange(desc(n))
+
+#most popular hashtag graph
+hashtag_popular <- 
+hashes %>%
+  filter(n>= 5) %>%
+  ggplot(., aes(x= n, y= hashtag1)) +
+  geom_point(col = "red3", size=3)+
+  xlab(label = "Number of Times the Hashtag Was Used") +
+  ylab(label = "Most Popular Hashtag") +
+  ggtitle("Most Popular Hashtags")
+
+```
+
+When we look at the most popular hashtags, "yeson1631" is by far the most used hashtag.
+
+```{r}
+hashtag_popular
+```
+
+
+```{r, warning = FALSE, include = FALSE}
+
+hashes2 <-
+  tweets %>%
+  dplyr::select(hashtags, reply_count, favorite_count, text) %>%
+  tidyr::drop_na(hashtags) %>%
+  mutate(hashtags = tolower(hashtags)) %>%
+  tidyr::separate(., hashtags, into = c("hashtag1", "hashtag2", "hashtag3"),
+           sep = " ") %>%
+  group_by(hashtag2) %>%
+  drop_na(hashtag2) %>%
+  count(hashtag2) %>%
+  arrange(desc(n))
+
+#second most popular hashtag graph
+second_popular <- 
+  hashes2 %>%
+  filter(n>= 5) %>%
+  ggplot(., aes(x= n, y= hashtag2)) +
+  geom_point(col = "red3", size =3)+
+  xlab(label = "Number of Times the Hashtag Was Used") +
+  ylab(label = "Second Most Popular Hashtag") +
+  ggtitle("Second Most Popular Hashtags")
+
+
+
+```
+
+Users often put a second hashtag  in their message, and those were also generally pretty positive.
+
+```{r}
+second_popular 
+```
+
+
+#  Voting Results
+
+Next we look at the voting results. While Twitter has a strong level of support for Initiative 1631, the voting results are very different. The majority of voters voted "No" and the referendum did not pass.  About 1.71 million people voted no and only 1.32 million voted yes. 
+
+
+```{r, include = FALSE}
+target <- c("State Measures Initiative Measure No. 1631 Initiative Measure No. 1631 concerns pollution.")
+
+target2 <- c("Washington State Initiative Measure No. 1631 Initiative Measure No. 1631 concerns pollution.")
+
+votes <-
+  votes %>%
+  select(County, Race, Candidate, Votes, PercentageOfTotalVotes) %>%
+  filter(Race %in% c(target, target2)) %>%
+  mutate(subregion= tolower(County))
+
+```
+
+
+```{r, include = FALSE}
+sum_votes <- 
+votes %>%
+  group_by(Candidate, Race) %>%
+  mutate(Total_votes = sum(Votes)) 
+
+vote_count <-
+ggplot(data = sum_votes, aes(x= Candidate, y = Total_votes))+
+  geom_bar(stat = "identity",  position=position_dodge(), fill = "darkgreen") +
+    geom_text(
+    aes(label = Total_votes),
+    position = position_dodge(1),
+    vjust = 0) +
+  ggtitle("Initiative 1631 Voting Results") +
+  xlab("") +
+  ylab("Total Votes") +
+  theme_classic()
+```
+
+```{r}
+vote_count
+
+```
+
+When we look at the results by county, we see that there is significant opposition to the measure in almost every county in the state. In both small rural counties and more urban counties, like King County, significant percentages of voters did not vote for Initiative 1631.
+
+```{r}
+#option 
+ggplot(votes, aes(County, Votes)) +
+geom_bar(stat = "identity", aes(fill = Candidate)) + coord_flip()
+
+```
+
+
+### Analysis
+
+## Mapping
+
+To determine where voters who oppose the measure live, we we pulled a map of Washington state and the coordinates for the country boundaries from the R maps package. Then we combined it with the voting data to map the referendum results.
+
+
+```{r, include = FALSE, warning= FALSE}
+
+#i use the ggmap package for this map
+state = c(left = -124.84, bottom = 45.54,right = -116.92, top = 49.0)
+
+map2 <- get_stamenmap(state, zoom = 7, maptype = "toner-lite") %>% ggmap()
+
+#this map information is pulled from ggmap's map package
+county<- map_data("county")
+
+wash_counties <-
+county %>%
+  filter(region == "washington") 
+
+map2 +
+  geom_path(data = wash_counties, mapping =aes(x= long, y= lat, group = group))
+
+w <- ggplot(data = wash_counties, mapping =aes(x= long, y= lat, group = group))
+
+
+```
+
+```{r, inlude = TRUE, warning = FALSE}
+vote_loc <- right_join(wash_counties, votes, by = "subregion")
+
+```
+
+
+
+This map shows the percentage of voters who voted "yes" on Initiative 1631. The darker the blue, the higher proportion of voters who voted "no". In many Eastern Washington counties, which are rural and more conservative, only 20% - 30% of voters voted "yes" for the carbon tax.
+```{r, include=FALSE, echo = FALSE, warning=FALSE}
+yes_votes <-
+  vote_loc %>%
+  filter(Candidate == "Yes") %>%
+  mutate(PercentageOfTotalVotes = as.numeric(.$PercentageOfTotalVotes)) %>%
+  mutate(Votes = as.numeric(.$Votes))
+
+
+results <-  w +
+  geom_polygon(data = yes_votes, aes(x= long, y= lat, fill = PercentageOfTotalVotes)) +
+  ggtitle("% Voters who Voted Yes on 1631")
+
+```
+
+```{r}
+results
+```
+
+When we map the "no" voters, we see that even in urban, more liberal areas like King County, up to 40% of voters still voted "no". This is a rather surprising result because many would have expected more liberal voters to vote yes. However, the referendum was not popular enough in liberal areas to make up for its large losses in rural areas.
+
+```{r, include=FALSE, echo = FALSE, warning=FALSE}
+no_votes <- 
+  vote_loc %>%
+  filter(Candidate == "No") %>%
+  mutate(PercentageOfTotalVotes = as.numeric(.$PercentageOfTotalVotes)) %>%
+  mutate(Votes = as.numeric(.$Votes))
+
+no_results <-  w +
+  geom_polygon(data = no_votes, aes(x= long, y= lat, fill = PercentageOfTotalVotes)) +     ggtitle("% Voters who Voted No on 1631")
+
+```
+
+```{r, warning = FALSE}
+no_results
+```
+## Discussion
+
+The referendum, like many other tax increases, proved unpopular with voters. The referendum did not pass (56% to 44%), despite the prevalent support on Twitter.
+
+Based on these findings, it appears that Initiative 1631 enjoyed far greater support among Twitter users than the voting population. The Twitter population is not a representative sample of the voting population, and many voters are not active on Twitter. Twitter likely over-represented urban and out-of-state residents, and voters in rural and even suburban areas are not well-represented on Twitter.
+
+Further, many of the supporters on Twitter represented activist groups who used it to advertise or drum up support for the carbon tax. In that context, it is possible that some urban professionals  did not want to pay for a carbon tax and likely voted no, but did not feel comfortable broadcasting their opposition on Twitter.
+
+While this is just one case study, based on these results, Twitter is not a representative sample of the voting population and scholars must make adjustments before using Twitter to forecast elections.
+
+## References
