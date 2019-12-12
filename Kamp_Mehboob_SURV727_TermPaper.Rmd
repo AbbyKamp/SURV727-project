@@ -7,26 +7,7 @@ output:
   pdf_document:
     toc: yes
     df_print: kable
-references:
-- id: Roberts2018
-  title: Washington votes no on a carbon tax - again
-  author:
-  - family: Roberts
-    given: David
-  container-title: Vox
-  type: article-newspaper
-  issued:
-    year: 2018
-- id: Washington Courts
-  title: Court Directory: County-City Reference List
-  author:
-  - organization: State of Washington
-  url: https://www.courts.wa.gov/court_dir/?fa=court_dir.countycityref 
-- id: Elections and Voting
-  title: November 6, 2018 General Election Results
-  author:
-  - organization: Secretary of State
-  url: https://results.vote.wa.gov/results/20181106/Export.html
+
 ---
 
 ```{r, include = FALSE}
@@ -195,6 +176,7 @@ We also obtained the user data that was associated with the Twitter accounts in 
 
 ```{r, include = FALSE, results = "hide", message= FALSE}
 users <- read_csv("twitter-users.csv")
+original_users <- read_csv("twitter-users.csv")
 ```
 
 To work with the data we had, we manipulated the user-entered location data and merged it with a list of Washington cities and their respective counties. We obtained this list from the Washington Court system Website.(Washington Courts).
@@ -433,6 +415,23 @@ Users often put a second hashtag  in their message, and those were also generall
 second_popular 
 ```
 
+```{r, include = FALSE}
+
+user_places <- original_users %>%
+  select(screen_name, location) %>%
+  group_by(location) %>%
+  drop_na(.) %>%
+  count(location) %>%
+  arrange(desc(n))
+
+user_places <-(head(user_places))
+```
+
+```{r}
+kable(user_places, "latex")
+```
+
+We also look at the locations of most of the Twitter users and the majority appear to be concentrated in the Seattle area.
 
 #  Voting Results
 
@@ -451,7 +450,6 @@ votes <-
   mutate(subregion= tolower(County))
 
 ```
-
 
 ```{r, include = FALSE}
 sum_votes <- 
@@ -476,7 +474,6 @@ ggplot(data = sum_votes, aes(x= Candidate, y = Total_votes))+
 
 ```{r}
 vote_count
-
 ```
 
 ```{r}
@@ -511,7 +508,6 @@ map2 +
   geom_path(data = wash_counties, mapping =aes(x= long, y= lat, group = group))
 
 w <- ggplot(data = wash_counties, mapping =aes(x= long, y= lat, group = group))
-
 
 ```
 
