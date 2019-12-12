@@ -8,31 +8,25 @@ output:
     toc: yes
     df_print: kable
 references:
-- id: Wickham2014
-  title: Tidy Data
+- id: Roberts2018
+  title: Washington votes no on a carbon tax - again
   author:
-  - family: Wickham
-    given: Hadley
-  container-title: Journal of Statistical Software
-  volume: 59
-  issue: 10
-  page: 1-23
-  type: article-journal
+  - family: Roberts
+    given: David
+  container-title: Vox
+  type: article-newspaper
   issued:
-    year: 2014
-- id: Baumer2017
-  title: Modern Data Science with R
+    year: 2018
+- id: Washington Courts
+  title: Court Directory: County-City Reference List
   author:
-  - family: Baumer
-    given: Benjamin S.
-  - family: Kaplan
-    given: Daniel T.
-  - family: Horton
-    given: Nicholas J.
-  type: book
-  publisher: Chapman \& Hall/CRC Press.
-  issued:
-    year: 2017
+  - organization: State of Washington
+  url: https://www.courts.wa.gov/court_dir/?fa=court_dir.countycityref 
+- id: Elections and Voting
+  title: November 6, 2018 General Election Results
+  author:
+  - organization: Secretary of State
+  url: https://results.vote.wa.gov/results/20181106/Export.html
 ---
 
 ```{r, include = FALSE}
@@ -57,13 +51,13 @@ library(kableExtra)
 
 ## Introduction
 
-In 2018, Washington States had a carbon tax referendum on the ballot. It asked voters:
+In 2018, Washington States posted a carbon tax referendum on the ballot. It asked voters:
 
 "This measure would charge pollution fees on sources of greenhouse gas pollutants and use the revenue to reduce pollution, promote clean energy, and address climate impacts, under oversight of a public board.
 
 Should this measure be enacted into law?""
 
-Initiative 1631 would have enacted a fee a $15 per ton of carbon emitted in 2020 and raised $2 per year until 2035. The revenue would have been invested in "clean air and energy", "clean water and health forests", and "healthy communities". Initiative 1631 was supported by a variety of climate groups, and there was was a broad coalition supporting the measure. Washington State has a reputation for climate-friendly, left-leaning politics, which gave supporters hope that the referendum, would pass. (Source:  https://www.vox.com/energy-and-environment/2018/9/28/17899804/washington-1631-results-carbon-fee-green-new-deal)
+Initiative 1631 would have enacted a fee a $15 per ton of carbon emitted in 2020 and raised $2 per year until 2035. The revenue would have been invested in "clean air and energy", "clean water and health forests", and "healthy communities". Initiative 1631 was supported by a variety of climate groups, and there was was a broad coalition supporting the measure. Washington State has a reputation for climate-friendly, left-leaning politics, which gave supporters hope that the referendum, would pass (Roberts 2018).
 
 We use Initiative 1631 as a case study to compare the online support for a ballot initiative with actual voting results.
 
@@ -203,9 +197,9 @@ We also obtained the user data that was associated with the Twitter accounts in 
 users <- read_csv("twitter-users.csv")
 ```
 
-To work with the data we had, we manipulated the user-entered location data and merged it with a list of Washington cities and their respective counties. We obtained this list from the Washington Court system Website.((https://www.courts.wa.gov/court_dir/?fa=court_dir.countycityref).
+To work with the data we had, we manipulated the user-entered location data and merged it with a list of Washington cities and their respective counties. We obtained this list from the Washington Court system Website.(Washington Courts).
 
-We obtained the voting results from Washington Secretary of State webpage. We downloaded the "All Counties" file to obtain the results of each election broken down by county. (source: https://results.vote.wa.gov/results/20181106/Export.html) 
+We obtained the voting results from Washington Secretary of State webpage. We downloaded the "All Counties" file to obtain the results of each election broken down by county (Elections and Voting). 
 
 
 ```{r, include = FALSE}
@@ -269,9 +263,7 @@ votes <- read_csv("washington-2018-results.csv")
 
 Overall, online support for Initiative 1631 was quite strong.
 
-# Results
-
-## Tweet Results
+# Twitter Results
 
 We start by looking at the tweets themselves. First, we sort and filter the tweets based on the favorite count. In the table below, we see that the most Favorited tweets contain positive messages about the Initiative. 
 
@@ -290,6 +282,8 @@ kable(favorite, "latex") %>%
   column_spec(2, width = "15em")
 ```
 
+
+
 The most-shared tweets also express support for carbon tax. However, the most shared tweet states that the New York Times endorsed Initiative 1631. While this is an important tweet, it signals out-of-state support rather than domestic, Washington support. 
 
 ```{r, include = FALSE}
@@ -307,7 +301,7 @@ kable(most_retweets, "latex")%>%
   column_spec(2, width = "15em")
 ```
 
-We created a graph that showed the hashtags used in the most popular tweets as measured by reply count and favorite count.  The most-Favorited hashtag was "yeson1631" with 591 favorites, followed by "election day" with 152.  For reply_count, "noon1631" had the most replies at 16, with "yeson1631" close behind with 13 replies. 
+
 
 ```{r, warning = FALSE, include = FALSE}
 popular_tweets <- 
@@ -337,6 +331,8 @@ popular_tweet_graph
 
 ```
 
+We created a graph that showed the hashtags used in the most popular tweets as measured by reply count and favorite count.  The most-Favorited hashtag was "yeson1631" with 591 favorites, followed by "election day" with 152.  For reply_count, "noon1631" had the most replies at 16, with "yeson1631" close behind with 13 replies. 
+
 ```{r, warning = FALSE, include = FALSE}
 user_support <- 
   tweets %>%
@@ -362,11 +358,14 @@ user_support_graph <-
 
 ```
 
-When evaluating the users who posted about this topic, many of the user accounts appeared to be activist accounts. For example, the graph below shows that several active screen names are: "yeson1631", "WA47Dems", "VoteNOon1631". and "MomsAction". 
+
 
 ```{r}
 user_support_graph
 ```
+
+When evaluating the users who posted about this topic, many of the user accounts appeared to be activist accounts. For example, the graph below shows that several active screen names are: "yeson1631", "WA47Dems", "VoteNOon1631". and "MomsAction". 
+
 
 ```{r, warning = FALSE, include = FALSE}
 hashes <-
@@ -392,11 +391,12 @@ hashes %>%
 
 ```
 
-When we look at the most popular hashtags, "yeson1631" is by far the most used hashtag.
 
 ```{r}
 hashtag_popular
 ```
+
+When we look at the most popular hashtags, "yeson1631" is by far the most used hashtag.
 
 
 ```{r, warning = FALSE, include = FALSE}
@@ -459,6 +459,8 @@ votes %>%
   group_by(Candidate, Race) %>%
   mutate(Total_votes = sum(Votes)) 
 
+sum_votes
+
 vote_count <-
 ggplot(data = sum_votes, aes(x= Candidate, y = Total_votes))+
   geom_bar(stat = "identity",  position=position_dodge(), fill = "darkgreen") +
@@ -477,17 +479,14 @@ vote_count
 
 ```
 
-When we look at the results by county, we see that there is significant opposition to the measure in almost every county in the state. In both small rural counties and more urban counties, like King County, significant percentages of voters did not vote for Initiative 1631.
-
 ```{r}
 #option 
 ggplot(votes, aes(County, Votes)) +
 geom_bar(stat = "identity", aes(fill = Candidate)) + coord_flip()
 
 ```
+When we look at the results by county, we see that there is significant opposition to the measure in almost every county in the state. In both small rural counties and more urban counties, like King County, significant percentages of voters did not vote for Initiative 1631.
 
-
-### Analysis
 
 ## Mapping
 
@@ -522,8 +521,6 @@ vote_loc <- right_join(wash_counties, votes, by = "subregion")
 ```
 
 
-
-This map shows the percentage of voters who voted "yes" on Initiative 1631. The darker the blue, the higher proportion of voters who voted "no". In many Eastern Washington counties, which are rural and more conservative, only 20% - 30% of voters voted "yes" for the carbon tax.
 ```{r, include=FALSE, echo = FALSE, warning=FALSE}
 yes_votes <-
   vote_loc %>%
@@ -541,8 +538,7 @@ results <-  w +
 ```{r}
 results
 ```
-
-When we map the "no" voters, we see that even in urban, more liberal areas like King County, up to 40% of voters still voted "no". This is a rather surprising result because many would have expected more liberal voters to vote yes. However, the referendum was not popular enough in liberal areas to make up for its large losses in rural areas.
+This map shows the percentage of voters who voted "yes" on Initiative 1631. The darker the blue, the higher proportion of voters who voted "no". In many Eastern Washington counties, which are rural and more conservative, only 20% - 30% of voters voted "yes" for the carbon tax.
 
 ```{r, include=FALSE, echo = FALSE, warning=FALSE}
 no_votes <- 
@@ -559,6 +555,9 @@ no_results <-  w +
 ```{r, warning = FALSE}
 no_results
 ```
+When we map the "no" voters, we see that even in urban, more liberal areas like King County, up to 40% of voters still voted "no". This is a rather surprising result because many would have expected more liberal voters to vote yes. However, the referendum was not popular enough in liberal areas to make up for its large losses in rural areas.
+
+
 ## Discussion
 
 The referendum, like many other tax increases, proved unpopular with voters. The referendum did not pass (56% to 44%), despite the prevalent support on Twitter.
@@ -571,3 +570,9 @@ While this is just one case study, based on these results, Twitter is not a repr
 
 ## References
 Our Github account with is https://github.com/AbbyKamp/SURV727-project 
+
+Roberts, David. "Washington votes no on a carbon tax - again" Vox. November 6, 2018. https://www.vox.com/energy-and-environment/2018/9/28/17899804/washington-1631-results-carbon-fee-green-new-deal
+
+Washington Courts. "Court Directory: County-City Reference List"https://www.courts.wa.gov/court_dir/?fa=court_dir.countycityref
+
+Washington Secretary of State. "November 6, 2018 General Election Results" https://results.vote.wa.gov/results/20181106/Export.html
