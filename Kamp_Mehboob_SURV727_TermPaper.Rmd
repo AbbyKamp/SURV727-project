@@ -570,3 +570,4 @@ Further, many of the supporters on Twitter represented activist groups who used 
 While this is just one case study, based on these results, Twitter is not a representative sample of the voting population and scholars must make adjustments before using Twitter to forecast elections.
 
 ## References
+Our Github account with is https://github.com/AbbyKamp/SURV727-project 
